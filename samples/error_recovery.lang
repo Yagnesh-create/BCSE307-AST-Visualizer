@@ -1,0 +1,6 @@
+// Multiple syntax errors — parser should recover and report all.
+int a = ;
+let b = 5
+if (x > 0 { print("hello"); }
+int c = 10;
+let d = ;

@@ -1,0 +1,26 @@
+// Semantically valid program — should report 0 issues.
+func add(a, b) {
+    return a + b;
+}
+
+func max(a, b) {
+    if (a > b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+int result = add(3, 4);
+int biggest = max(result, 10);
+
+// Nested scopes — inner 'x' does not conflict with outer 'x'
+{
+    int x = 1;
+    {
+        int y = x + 2;
+    }
+}
+{
+    int x = 99;
+}

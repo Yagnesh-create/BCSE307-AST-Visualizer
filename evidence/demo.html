@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AST</title>
+  <style>
+    :root {
+      --bg-base: #0a0f1d;
+      --bg-surface: #111827;
+      --bg-card: #1f2937;
+      --bg-hover: #374151;
+      --border-color: #374151;
+      --border-subtle: #1f2937;
+      --text-main: #f9fafb;
+      --text-muted: #9ca3af;
+      --text-faint: #6b7280;
+      --accent-primary: #38bdf8;
+      --accent-hover: #0284c7;
+      
+      --cat-structure: #6366f1;
+      --cat-structure-bg: rgba(99, 102, 241, 0.15);
+      --cat-function: #10b981;
+      --cat-function-bg: rgba(16, 185, 129, 0.15);
+      --cat-variable: #0ea5e9;
+      --cat-variable-bg: rgba(14, 165, 233, 0.15);
+      --cat-control: #f59e0b;
+      --cat-control-bg: rgba(245, 158, 11, 0.15);
+      --cat-expression: #a855f7;
+      --cat-expression-bg: rgba(168, 85, 247, 0.15);
+      --cat-literal: #ec4899;
+      --cat-literal-bg: rgba(236, 72, 153, 0.15);
+      --cat-other: #64748b;
+      --cat-other-bg: rgba(100, 116, 139, 0.15);
+      
+      --tree-line-color: #374151;
+      --highlight-bg: rgba(245, 158, 11, 0.25);
+      --highlight-border: #f59e0b;
+    }
+
+    [data-theme="light"] {
+      --bg-base: #f8fafc;
+      --bg-surface: #ffffff;
+      --bg-card: #f1f5f9;
+      --bg-hover: #e2e8f0;
+      --border-color: #cbd5e1;
+      --border-subtle: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-faint: #94a3b8;
+      --accent-primary: #0284c7;
+      --accent-hover: #0369a1;
+      --tree-line-color: #cbd5e1;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg-base);
+      color: var(--text-main);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .app-header {
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-color);
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      gap: 16px;
+    }
+
+    .header-branding {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #38bdf8, #6366f1);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 900;
+      font-size: 18px;
+      box-shadow: 0 2px 8px rgba(56, 189, 248, 0.3);
+    }
+
+    .header-title {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .version-tag {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent-primary);
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      font-weight: 600;
+    }
+
+    .stats-ribbon {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .stat-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .stat-val {
+      color: var(--accent-primary);
+      font-weight: 700;
+      font-family: Consolas, monospace;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .btn:hover {
+      background: var(--bg-hover);
+      border-color: var(--accent-primary);
+      color: var(--accent-primary);
+    }
+
+    .btn-primary {
+      background: var(--accent-primary);
+      border-color: var(--accent-primary);
+      color: #0b1329;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      border-color: var(--accent-hover);
+      color: #fff;
+    }
+
+    .controls-bar {
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-color);
+      padding: 8px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-shrink: 0;
+    }
+
+    .search-box {
+      position: relative;
+      width: 280px;
+    }
+
+    .search-input {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 6px 10px 6px 30px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      outline: none;
+      transition: border 0.2s;
+    }
+
+    .search-input:focus {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 9px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .search-count {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 11px;
+      color: var(--accent-primary);
+      font-weight: bold;
+    }
+
+    .category-filters {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .filter-chip {
+      padding: 4px 10px;
+      border-radius: 14px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+      color: var(--text-muted);
+      transition: all 0.15s;
+    }
+
+    .filter-chip.active, .filter-chip:hover {
+      color: var(--text-main);
+      border-color: var(--accent-primary);
+      background: rgba(56, 189, 248, 0.15);
+    }
+
+    .studio-layout {
+      display: flex;
+      flex: 1;
+      height: calc(100vh - 105px);
+      overflow: hidden;
+    }
+
+    .panel-source {
+      width: 320px;
+      background: var(--bg-surface);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      transition: width 0.2s ease;
+    }
+
+    .panel-header {
+      padding: 10px 14px;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-color);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .source-content {
+      flex: 1;
+      overflow-y: auto;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 12.5px;
+      line-height: 1.6;
+      padding: 8px 0;
+    }
+
+    .src-line {
+      display: flex;
+      padding: 1px 12px;
+      transition: background 0.15s;
+      cursor: pointer;
+    }
+
+    .src-line:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .src-line.active-line {
+      background: rgba(56, 189, 248, 0.25);
+      border-left: 3px solid var(--accent-primary);
+    }
+
+    .src-ln {
+      width: 32px;
+      color: var(--text-faint);
+      user-select: none;
+      text-align: right;
+      padding-right: 12px;
+      flex-shrink: 0;
+    }
+
+    .src-code {
+      color: var(--text-main);
+      white-space: pre;
+    }
+
+    .panel-tree {
+      flex: 1;
+      overflow: auto;
+      padding: 24px 32px;
+      background: var(--bg-base);
+      position: relative;
+    }
+
+    .tree-root {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .tree-children {
+      list-style: none;
+      padding-left: 26px;
+      position: relative;
+      margin-left: 12px;
+      border-left: 2px solid var(--tree-line-color);
+    }
+
+    .tree-item {
+      margin: 6px 0;
+      position: relative;
+    }
+
+    .tree-children > .tree-item::before {
+      content: "";
+      position: absolute;
+      top: 16px;
+      left: -26px;
+      width: 24px;
+      height: 2px;
+      background: var(--tree-line-color);
+    }
+
+    .node-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .tree-toggle {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.15s;
+      flex-shrink: 0;
+    }
+
+    .tree-toggle:hover {
+      background: var(--bg-hover);
+      color: var(--text-main);
+      border-color: var(--accent-primary);
+    }
+
+    .tree-item.collapsed > .tree-children {
+      display: none;
+    }
+
+    .tree-item.collapsed > .node-row .tree-toggle svg {
+      transform: rotate(-90deg);
+    }
+
+    .tree-toggle-placeholder {
+      width: 20px;
+      height: 20px;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    .node-card {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 5px 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+      transition: all 0.15s ease;
+    }
+
+    .node-card:hover {
+      border-color: var(--accent-primary);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    }
+
+    .tree-item.selected > .node-row .node-card {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.4);
+      background: var(--bg-card);
+    }
+
+    .tree-item.search-match > .node-row .node-card {
+      border-color: var(--highlight-border);
+      background: var(--highlight-bg);
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+      70% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+    }
+
+    .node-label {
+      font-family: Consolas, monospace;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .badge {
+      font-size: 10.5px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+
+    .badge-cat {
+      text-transform: uppercase;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .badge-structure { background: var(--cat-structure-bg); color: var(--cat-structure); border: 1px solid var(--cat-structure); }
+    .badge-function { background: var(--cat-function-bg); color: var(--cat-function); border: 1px solid var(--cat-function); }
+    .badge-variable { background: var(--cat-variable-bg); color: var(--cat-variable); border: 1px solid var(--cat-variable); }
+    .badge-control { background: var(--cat-control-bg); color: var(--cat-control); border: 1px solid var(--cat-control); }
+    .badge-expression { background: var(--cat-expression-bg); color: var(--cat-expression); border: 1px solid var(--cat-expression); }
+    .badge-literal { background: var(--cat-literal-bg); color: var(--cat-literal); border: 1px solid var(--cat-literal); }
+    .badge-other { background: var(--cat-other-bg); color: var(--cat-other); border: 1px solid var(--cat-other); }
+
+    .badge-loc {
+      background: rgba(148, 163, 184, 0.1);
+      color: var(--text-muted);
+      border: 1px solid var(--border-color);
+      font-family: Consolas, monospace;
+    }
+
+    .badge-count {
+      background: var(--bg-card);
+      color: var(--text-muted);
+      font-size: 10px;
+    }
+
+    .panel-inspector {
+      width: 340px;
+      background: var(--bg-surface);
+      border-left: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .inspector-body {
+      padding: 16px;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .insp-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--text-muted);
+      text-align: center;
+      gap: 12px;
+      padding: 24px;
+    }
+
+    .insp-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+
+    .insp-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      letter-spacing: 0.5px;
+    }
+
+    .insp-node-name {
+      font-size: 16px;
+      font-weight: 700;
+      font-family: Consolas, monospace;
+      color: var(--accent-primary);
+      margin-bottom: 6px;
+      word-break: break-all;
+    }
+
+    .insp-field {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 12px;
+    }
+
+    .insp-field:last-child { border-bottom: none; }
+    .insp-key { color: var(--text-muted); font-weight: 500; }
+    .insp-val { color: var(--text-main); font-weight: 600; font-family: Consolas, monospace; }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--accent-primary);
+      color: #0b1329;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.2s ease;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="header-branding">
+      <div class="logo-icon">&#9889;</div>
+      <div>
+        <div class="header-title">
+          AST Visualizer & Explorer
+          <span class="version-tag">BCSE307 Review 3</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-ribbon">
+      <div class="stat-pill" title="Total nodes in Abstract Syntax Tree">
+        <span>Nodes:</span>
+        <span class="stat-val">52</span>
+      </div>
+      <div class="stat-pill" title="Maximum hierarchy depth">
+        <span>Max Depth:</span>
+        <span class="stat-val">8</span>
+      </div>
+      <div class="stat-pill" title="Semantic Analysis Status">
+        <span>Status:</span>
+        <span class="stat-val" style="color: var(--cat-function)">&#10003; 0 Issues</span>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn" onclick="toggleTheme()" title="Switch Light/Dark mode">&#9680; Theme</button>
+      <button class="btn" onclick="copyAstJson()" title="Copy JSON AST to clipboard">&#128203; Copy JSON</button>
+      <button class="btn btn-primary" onclick="window.print()" title="Print / Export PDF">&#128424; Export</button>
+    </div>
+  </header>
+
+  <div class="controls-bar">
+    <div class="search-box">
+      <svg class="search-icon" viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      <input type="text" id="searchInput" class="search-input" placeholder="Search node or label..." oninput="handleSearch(this.value)">
+      <span id="searchCount" class="search-count"></span>
+    </div>
+
+    <div class="category-filters">
+      <span class="filter-chip active" onclick="filterCategory('all', this)">All Nodes</span>
+      <span class="filter-chip" onclick="filterCategory('function', this)">Functions</span>
+      <span class="filter-chip" onclick="filterCategory('variable', this)">Variables</span>
+      <span class="filter-chip" onclick="filterCategory('control', this)">Control Flow</span>
+      <span class="filter-chip" onclick="filterCategory('expression', this)">Expressions</span>
+      <span class="filter-chip" onclick="filterCategory('literal', this)">Literals</span>
+    </div>
+
+    <div style="display: flex; gap: 8px;">
+      <button class="btn" onclick="expandAll()">&#8862; Expand All</button>
+      <button class="btn" onclick="collapseAll()">&#8863; Collapse All</button>
+    </div>
+  </div>
+
+  <div class="studio-layout">
+    <div class="panel-source" id="sourcePanel">
+      <div class="panel-header">
+        <span>SOURCE CODE (.lang)</span>
+        <button class="btn" style="padding: 2px 6px; font-size: 10px;" onclick="toggleSourcePanel()">Toggle</button>
+      </div>
+      <div class="source-content" id="sourceContainer">
+        <div style="padding:16px;color:#94a3b8;font-size:12px;">No source code attached</div>
+      </div>
+    </div>
+
+    <main class="panel-tree" id="treeContainer">
+      <ul class="tree-root">
+        <li class="tree-item" id="ast_node_0" data-category="structure" data-head="Program" data-line="1" data-col="1">  <div class="node-row" onclick="selectNode('ast_node_0')">    <button class="tree-toggle" onclick="toggleNode('ast_node_0', event)" title="Collapse/Expand"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>    <div class="node-card cat-structure">      <span class="badge badge-cat badge-structure">Structure</span>      <span class="node-label">Program</span>      <span class="badge badge-loc" title="Source coordinate">@1:1</span>      <span class="badge badge-count" title="Subtree nodes">2 children</span>    </div>  </div>  <ul class="tree-children" id="ast_node_0_children"><li class="tree-item" id="ast_node_1" data-category="function" data-head="FunctionDecl" data-line="2" data-col="1">  <div class="node-row" onclick="selectNode('ast_node_1')">    <button class="tree-toggle" onclick="toggleNode('ast_node_1', event)" title="Collapse/Expand"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>    <div class="node-card cat-function">      <span class="badge badge-cat badge-function">Function</span>      <span class="node-label">FunctionDecl(classify)</span>      <span class="badge badge-loc" title="Source coordinate">@2:1</span>      <span class="badge badge-count" title="Subtree nodes">2 children</span>    </div>  </div>  <ul class="tree-children" id="ast_node_1_children"><li class="tree-item" id="ast_node_2" data-category="function" data-head="Param" data-line="2" data-col="15">  <div class="node-row" onclick="selectNode('ast_node_2')">    <span class="tree-toggle-placeholder"></span>    <div class="node-card cat-function">      <span class="badge badge-cat badge-function">Function</span>      <span class="node-label">Param(x)</span>      <span class="badge badge-loc" title="Source coordinate">@2:15</span>          </div>  </div>  </li><li class="tree-item" id="ast_node_3" data-category="structure" data-head="Block" data-line="2" data-col="18">  <div class="node-row" onclick="selectNode('ast_node_3')">    <button class="tree-toggle" onclick="toggleNode('ast_node_3', event)" title="Collapse/Expand"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>    <div class="node-card cat-structure">      <span class="badge badge-cat badge-structure">Structure</span>      <span class="node-label">Block</span>      <span class="badge badge-loc" title="Source coordinate">@2:18</span>      <span class="badge badge-count" title="Subtree nodes">1 child</span>    </div>  </div>  <ul class="tree-children" id="ast_node_3_children"><li class="tree-item" id="ast_node_4" data-category="control" data-head="IfStmt" data-line="3" data-col="5">  <div class="node-row" onclick="selectNode('ast_node_4')">    <button class="tree-toggle" onclick="toggleNode('ast_node_4', event)" title="Collapse/Expand"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>    <div class="node-card cat-control">      <span class="badge badge-cat badge-control">Control Flow</span>      <span class="node-label">IfStmt</span>      <span class="badge badge-loc" title="Source coordinate">@3:5</span>      <span class="badge badge-count" title="Subtree nodes">3 children</span>    </div>  </div>  <ul class="tree-children" id="ast_node_4_children"><li class="tree-item" id="ast_node_5" data-category="expression" data-head="BinaryOp:&lt;" data-line="3" data-col="11">  <div class="node-row" onclick="selectNode('ast_node_5')">    <button class="tree-toggle" onclick="toggleNode('ast_node_5', event)" title="Collapse/Expand"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>    <div class="node-card cat-expression">      <span class="badge badge-cat badge-expression">Expression</span>      <span class="node-label">BinaryOp:&lt;</span>      <span class="badge badge-loc" title="Source coordinate">@3:11</span>      <span class="badge badge-count" title="Subtree nodes">2 children</span>    </div>  </div>  <ul class="tree-children" id="ast_node_5_children"><li class="tree-item" id="ast_node_6" data-category="literal" data-head="Identifier" data-line="3" data-col="9">  <div class="node-row" onclick="selectNode('ast_node_6')">    <span class="tree-toggle-placeholder"></span>    <div class="node-card cat-literal">      <span class="badge badge-cat badge-literal">Literal / Leaf</span>      <span class="node-label">Identifier(x)</span>      <span class="badge badge-loc" title="Source coordinate">@3:9</span>          </div>  </div>  </li><li class="tree-item" id="ast_node_7" data-category="literal" data-head="Literal:int" data-line="3" data-col="13">  <div class="node-row" onclick="selectNode('ast_node_7')">    <span class="tree-toggle-placeholder"></span>    <div class="node-card cat-literal">      <span class="badge badge-cat badge-literal">Literal / Leaf</span>      <span class="node-label">Literal:int(0)</span>      <span class="badge badge-loc" title="Source coordinate">@3:13</span>          </div>  </div>  </li></ul></li><li class="tree-item" id="ast_node_8" data-category="structure" data-head="Block" data-line="3" data-col="16">  <div class="node-row" onclick="selectNode('ast_node_8')">    <button class="tree-toggle" onclick="toggleNode('ast_node_8', event)" title="Collapse/Expand"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>    <div class="node-card cat-structure">      <span class="badge badge-cat badge-structure">Structure</span>      <span class="node-label">Block</span>      <span class="badge badge-loc" title="Source coordinate">@3:16</span>      <span class="badge badge-count" title="Subtree nodes">1 child</span>    </div>  </div>  <ul class="tree-children" id="ast_node_8_children"><li class="tree-item" id="ast_node_9" data-category="control" data-head="ExprStmt" data-line="4" data-col="14">  <div class="node-row" onclick="selectNode('ast_node_9')">    <button class="tree-toggle" onclick="toggleNode('ast_node_9', event)" title="Collapse/Expand"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>    <div class="node-card cat-control">      <span class="badge badge-cat badge-control">Control Flow</span>      <span class="node-label">ExprStmt</span>      <span class="badge badge-loc" title="Source coordinate">@4:14</span>      <span class="badge badge-count" title="Subtree nodes">1 child</span>    </div>  </div>  <ul class="tree-children" id="ast_node_9_children"><li class="tree-item" id="ast_node_10" data-category="other" data-head="Call" data-line="4" data-col="14">  <div class="node-row" onclick="selectNode('ast_node_10')">    <button class="tree-toggle" onclick="toggleNode('ast_node_10', event)" title="Collapse/Expand"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>    <div class="node-card cat-other">      <span class="badge badge-cat badge-other">Node</span>      <span class="node-label">Call(print)</span>      <span class="badge badge-loc" title="Source coordinate">@4:14</span>      <span class="badge badge-count" title="Subtree nodes">1 child</span>    </div>  </div>  <ul class="tree-children" id="ast_node_10_children"><li class="tree-item" id="ast_node_11" data-category="literal" data-head="Literal:string" data-line="4" data-col="15">  <div class="node-row" onclick="selectNode('ast_node_11')">    <span class="tree-toggle-placeholder"></span>    <div class="node-card cat-literal">      <span class="badge badge-cat badge-literal">Literal / Leaf</span>      <span class="node-label">Literal:string(&quot;negative&quot;)</span>      <span class="badge badge-loc" title="Source coordinate">@4:15</span>          </div>  </div>  </li></ul></li></ul></li></ul></li><li class="tree-item" id="ast_node_12" data-category="structure" data-head="Block" data-line="5" data-col="12">  <div class="node-row" onclick="selectNode('ast_node_12')">    <button class="tree-toggle" onclick="toggleNode('ast_node_12', event)" title="Collapse/Expand"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>    <div class="node-card cat-structure">      <span class="badge badge-cat badge-structure">Structure</span>      <span class="node-label">Block</span>      <span class="badge badge-loc" title="Source coordinate">@5:12</span>      <span class="badge badge-count" title="Subtree nodes">1 child</span>    </div>  </div>  <ul class="tree-children" id="ast_node_12_children"><li class="tree-item" id="ast_node_13" data-category="control" data-head="ExprStmt" data-line="6" data-col="14">  <div class="node-row" onclick="selectNode('ast_node_13')">    <button class="tree-toggle" onclick="toggleNode('ast_node_13', event)" title="Collapse/Expand"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>    <div class="node-card cat-control">      <span class="badge badge-cat badge-control">Control Flow</span>      <span class="node-label">ExprStmt</span>      <span class="badge badge-loc" title="Source coordinate">@6:14</span>      <span class="badge badge-count" title="Subtree nodes">1 child</span>    </div>  </div>  <ul class="tree-children" id="ast_node_13_children"><li class="tree-item" id="ast_node_14" data-category="other" data-head="Call" data-line="6" data-col="14">  <div class="node-row" onclick="selectNode('ast_node_14')">    <button class="tree-toggle" onclick="toggleNode('ast_node_14', event)" title="Collapse/Expand"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>    <div class="node-card cat-other">      <span class="badge badge-cat badge-other">Node</span>      <span class="node-label">Call(print)</span>      <span class="badge badge-loc" title="Source coordinate">@6:14</span>      <span class="badge badge-count" title="Subtree nodes">1 child</span>    </div>  </div>  <ul class="tree-children" id="ast_node_14_children"><li class="tree-item" id="ast_node_15" data-category="literal" data-head="Literal:string" data-line="6" data-col="15">  <div class="node-row" onclick="selectNode('ast_node_15')">    <span class="tree-toggle-placeholder"></span>    <div class="node-card cat-literal">      <span class="badge badge-cat badge-literal">Literal / Leaf</span>      <span class="node-label">Literal:string(&quot;non-negative&quot;)</span>      <span class="badge badge-loc" title="Source coordinate">@6:15</span>          </div>  </div>  </li></ul></li></ul></li></ul></li></ul></li></ul></li></ul></li><li class="tree-item" id="ast_node_16" data-category="function" data-head="FunctionDecl" data-line="10" data-col="1">  <div class="node-row" onclick="selectNode('ast_node_16')">    <button class="tree-toggle" onclick="toggleNode('ast_node_16', event)" title="Collapse/Expand"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>    <div class="node-card cat-function">      <span class="badge badge-cat badge-function">Function</span>      <span class="node-label">FunctionDecl(main)</span>      <span class="badge badge-loc" title="Source coordinate">@10:1</span>      <span class="badge badge-count" title="Subtree nodes">1 child</span>    </div>  </div>  <ul class="tree-children" id="ast_node_16_children"><li class="tree-item" id="ast_node_17" data-category="structure" data-head="Block" data-line="10" data-col="13">  <div class="node-row" onclick="selectNode('ast_node_17')">    <button class="tree-toggle" onclick="toggleNode('ast_node_17', event)" title="Collapse/Expand"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>    <div class="node-card cat-structure">      <span class="badge badge-cat badge-structure">Structure</span>      <span class="node-label">Block</span>      <span class="badge badge-loc" title="Source coordinate">@10:13</span>      <span class="badge badge-count" title="Subtree nodes">5 children</span>    </div>  </div>  <ul class="tree-children" id="ast_node_17_children"><li class="tree-item" id="ast_node_18" data-category="variable" data-head="VarDecl" data-line="11" data-col="5">  <div class="node-row" onclick="selectNode('ast_node_18')">    <button class="tree-toggle" onclick="toggleNode('ast_node_18', event)" title="Collapse/Expand"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>    <div class="node-card cat-variable">      <span class="badge badge-cat badge-variable">Variable</span>      <span class="node-label">VarDecl(let, a)</span>      <span class="badge badge-loc" title="Source coordinate">@11:5</span>      <span class="badge badge-count" title="Subtree nodes">1 child</span>    </div>  </div>  <ul class="tree-children" id="ast_node_18_children"><li class="tree-item" id="ast_node_19" data-category="expression" data-head="BinaryOp:+" data-line="11" data-col="15">  <div class="node-row" onclick="selectNode('ast_node_19')">    <button class="tree-toggle" onclick="toggleNode('ast_node_19', event)" title="Collapse/Expand"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>    <div class="node-card cat-expression">      <span class="badge badge-cat badge-expression">Expression</span>      <span class="node-label">BinaryOp:+</span>      <span class="badge badge-loc" title="Source coordinate">@11:15</span>      <span class="badge badge-count" title="Subtree nodes">2 children</span>    </div>  </div>  <ul class="tree-children" id="ast_node_19_children"><li class="tree-item" id="ast_node_20" data-category="literal" data-head="Literal:int" data-line="11" data-col="13">  <div class="node-row" onclick="selectNode('ast_node_20')">    <span class="tree-toggle-placeholder"></span>    <div class="node-card cat-literal">      <span class="badge badge-cat badge-literal">Literal / Leaf</span>      <span class="node-label">Literal:int(5)</span>      <span class="badge badge-loc" title="Source coordinate">@11:13</span>          </div>  </div>  </li><li class="tree-item" id="ast_node_21" data-category="expression" data-head="BinaryOp:*" data-line="11" data-col="19">  <div class="node-row" onclick="selectNode('ast_node_21')">    <button class="tree-toggle" onclick="toggleNode('ast_node_21', event)" title="Collapse/Expand"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>    <div class="node-card cat-expression">      <span class="badge badge-cat badge-expression">Expression</span>      <span class="node-label">BinaryOp:*</span>      <span class="badge badge-loc" title="Source coordinate">@11:19</span>      <span class="badge badge-count" title="Subtree nodes">2 children</span>    </div>  </div>  <ul class="tree-children" id="ast_node_21_children"><li class="tree-item" id="ast_node_22" data-category="literal" data-head="Literal:int" data-line="11" data-col="17">  <div class="node-row" onclick="selectNode('ast_node_22')">    <span class="tree-toggle-placeholder"></span>    <div class="node-card cat-literal">      <span class="badge badge-cat badge-literal">Literal / Leaf</span>      <span class="node-label">Literal:int(3)</span>      <span class="badge badge-loc" title="Source coordinate">@11:17</span>          </div>  </div>  </li><li class="tree-item" id="ast_node_23" data-category="literal" data-head="Literal:int" data-line="11" data-col="21">  <div class="node-row" onclick="selectNode('ast_node_23')">    <span class="tree-toggle-placeholder"></span>    <div class="node-card cat-literal">      <span class="badge badge-cat badge-literal">Literal / Leaf</span>      <span class="node-label">Literal:int(2)</span>      <span class="badge badge-loc" title="Source coordinate">@11:21</span>          </div>  </div>  </li></ul></li></ul></li></ul></li><li class="tree-item" id="ast_node_24" data-category="variable" data-head="VarDecl" data-line="12" data-col="5">  <div class="node-row" onclick="selectNode('ast_node_24')">    <button class="tree-toggle" onclick="toggleNode('ast_node_24', event)" title="Collapse/Expand"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>    <div class="node-card cat-variable">      <span class="badge badge-cat badge-variable">Variable</span>      <span class="node-label">VarDecl(int, i)</span>      <span class="badge badge-loc" title="Source coordinate">@12:5</span>      <span class="badge badge-count" title="Subtree nodes">1 child</span>    </div>  </div>  <ul class="tree-children" id="ast_node_24_children"><li class="tree-item" id="ast_node_25" data-category="literal" data-head="Literal:int" data-line="12" data-col="13">  <div class="node-row" onclick="selectNode('ast_node_25')">    <span class="tree-toggle-placeholder"></span>    <div class="node-card cat-literal">      <span class="badge badge-cat badge-literal">Literal / Leaf</span>      <span class="node-label">Literal:int(0)</span>      <span class="badge badge-loc" title="Source coordinate">@12:13</span>          </div>  </div>  </li></ul></li><li class="tree-item" id="ast_node_26" data-category="control" data-head="WhileStmt" data-line="13" data-col="5">  <div class="node-row" onclick="selectNode('ast_node_26')">    <button class="tree-toggle" onclick="toggleNode('ast_node_26', event)" title="Collapse/Expand"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>    <div class="node-card cat-control">      <span class="badge badge-cat badge-control">Control Flow</span>      <span class="node-label">WhileStmt</span>      <span class="badge badge-loc" title="Source coordinate">@13:5</span>      <span class="badge badge-count" title="Subtree nodes">2 children</span>    </div>  </div>  <ul class="tree-children" id="ast_node_26_children"><li class="tree-item" id="ast_node_27" data-category="expression" data-head="BinaryOp:&lt;" data-line="13" data-col="14">  <div class="node-row" onclick="selectNode('ast_node_27')">    <button class="tree-toggle" onclick="toggleNode('ast_node_27', event)" title="Collapse/Expand"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>    <div class="node-card cat-expression">      <span class="badge badge-cat badge-expression">Expression</span>      <span class="node-label">BinaryOp:&lt;</span>      <span class="badge badge-loc" title="Source coordinate">@13:14</span>      <span class="badge badge-count" title="Subtree nodes">2 children</span>    </div>  </div>  <ul class="tree-children" id="ast_node_27_children"><li class="tree-item" id="ast_node_28" data-category="literal" data-head="Identifier" data-line="13" data-col="12">  <div class="node-row" onclick="selectNode('ast_node_28')">    <span class="tree-toggle-placeholder"></span>    <div class="node-card cat-literal">      <span class="badge badge-cat badge-literal">Literal / Leaf</span>      <span class="node-label">Identifier(i)</span>      <span class="badge badge-loc" title="Source coordinate">@13:12</span>          </div>  </div>  </li><li class="tree-item" id="ast_node_29" data-category="literal" data-head="Literal:int" data-line="13" data-col="16">  <div class="node-row" onclick="selectNode('ast_node_29')">    <span class="tree-toggle-placeholder"></span>    <div class="node-card cat-literal">      <span class="badge badge-cat badge-literal">Literal / Leaf</span>      <span class="node-label">Literal:int(10)</span>      <span class="badge badge-loc" title="Source coordinate">@13:16</span>          </div>  </div>  </li></ul></li><li class="tree-item" id="ast_node_30" data-category="structure" data-head="Block" data-line="13" data-col="20">  <div class="node-row" onclick="selectNode('ast_node_30')">    <button class="tree-toggle" onclick="toggleNode('ast_node_30', event)" title="Collapse/Expand"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>    <div class="node-card cat-structure">      <span class="badge badge-cat badge-structure">Structure</span>      <span class="node-label">Block</span>      <span class="badge badge-loc" title="Source coordinate">@13:20</span>      <span class="badge badge-count" title="Subtree nodes">1 child</span>    </div>  </div>  <ul class="tree-children" id="ast_node_30_children"><li class="tree-item" id="ast_node_31" data-category="other" data-head="Assign" data-line="14" data-col="9">  <div class="node-row" onclick="selectNode('ast_node_31')">    <button class="tree-toggle" onclick="toggleNode('ast_node_31', event)" title="Collapse/Expand"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>    <div class="node-card cat-other">      <span class="badge badge-cat badge-other">Node</span>      <span class="node-label">Assign(i)</span>      <span class="badge badge-loc" title="Source coordinate">@14:9</span>      <span class="badge badge-count" title="Subtree nodes">1 child</span>    </div>  </div>  <ul class="tree-children" id="ast_node_31_children"><li class="tree-item" id="ast_node_32" data-category="expression" data-head="BinaryOp:+" data-line="14" data-col="15">  <div class="node-row" onclick="selectNode('ast_node_32')">    <button class="tree-toggle" onclick="toggleNode('ast_node_32', event)" title="Collapse/Expand"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>    <div class="node-card cat-expression">      <span class="badge badge-cat badge-expression">Expression</span>      <span class="node-label">BinaryOp:+</span>      <span class="badge badge-loc" title="Source coordinate">@14:15</span>      <span class="badge badge-count" title="Subtree nodes">2 children</span>    </div>  </div>  <ul class="tree-children" id="ast_node_32_children"><li class="tree-item" id="ast_node_33" data-category="literal" data-head="Identifier" data-line="14" data-col="13">  <div class="node-row" onclick="selectNode('ast_node_33')">    <span class="tree-toggle-placeholder"></span>    <div class="node-card cat-literal">      <span class="badge badge-cat badge-literal">Literal / Leaf</span>      <span class="node-label">Identifier(i)</span>      <span class="badge badge-loc" title="Source coordinate">@14:13</span>          </div>  </div>  </li><li class="tree-item" id="ast_node_34" data-category="literal" data-head="Literal:int" data-line="14" data-col="17">  <div class="node-row" onclick="selectNode('ast_node_34')">    <span class="tree-toggle-placeholder"></span>    <div class="node-card cat-literal">      <span class="badge badge-cat badge-literal">Literal / Leaf</span>      <span class="node-label">Literal:int(1)</span>      <span class="badge badge-loc" title="Source coordinate">@14:17</span>          </div>  </div>  </li></ul></li></ul></li></ul></li></ul></li><li class="tree-item" id="ast_node_35" data-category="control" data-head="ForStmt" data-line="16" data-col="5">  <div class="node-row" onclick="selectNode('ast_node_35')">    <button class="tree-toggle" onclick="toggleNode('ast_node_35', event)" title="Collapse/Expand"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>    <div class="node-card cat-control">      <span class="badge badge-cat badge-control">Control Flow</span>      <span class="node-label">ForStmt</span>      <span class="badge badge-loc" title="Source coordinate">@16:5</span>      <span class="badge badge-count" title="Subtree nodes">4 children</span>    </div>  </div>  <ul class="tree-children" id="ast_node_35_children"><li class="tree-item" id="ast_node_36" data-category="variable" data-head="VarDecl" data-line="16" data-col="10">  <div class="node-row" onclick="selectNode('ast_node_36')">    <button class="tree-toggle" onclick="toggleNode('ast_node_36', event)" title="Collapse/Expand"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>    <div class="node-card cat-variable">      <span class="badge badge-cat badge-variable">Variable</span>      <span class="node-label">VarDecl(let, j)</span>      <span class="badge badge-loc" title="Source coordinate">@16:10</span>      <span class="badge badge-count" title="Subtree nodes">1 child</span>    </div>  </div>  <ul class="tree-children" id="ast_node_36_children"><li class="tree-item" id="ast_node_37" data-category="literal" data-head="Literal:int" data-line="16" data-col="18">  <div class="node-row" onclick="selectNode('ast_node_37')">    <span class="tree-toggle-placeholder"></span>    <div class="node-card cat-literal">      <span class="badge badge-cat badge-literal">Literal / Leaf</span>      <span class="node-label">Literal:int(0)</span>      <span class="badge badge-loc" title="Source coordinate">@16:18</span>          </div>  </div>  </li></ul></li><li class="tree-item" id="ast_node_38" data-category="expression" data-head="BinaryOp:&lt;" data-line="16" data-col="23">  <div class="node-row" onclick="selectNode('ast_node_38')">    <button class="tree-toggle" onclick="toggleNode('ast_node_38', event)" title="Collapse/Expand"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>    <div class="node-card cat-expression">      <span class="badge badge-cat badge-expression">Expression</span>      <span class="node-label">BinaryOp:&lt;</span>      <span class="badge badge-loc" title="Source coordinate">@16:23</span>      <span class="badge badge-count" title="Subtree nodes">2 children</span>    </div>  </div>  <ul class="tree-children" id="ast_node_38_children"><li class="tree-item" id="ast_node_39" data-category="literal" data-head="Identifier" data-line="16" data-col="21">  <div class="node-row" onclick="selectNode('ast_node_39')">    <span class="tree-toggle-placeholder"></span>    <div class="node-card cat-literal">      <span class="badge badge-cat badge-literal">Literal / Leaf</span>      <span class="node-label">Identifier(j)</span>      <span class="badge badge-loc" title="Source coordinate">@16:21</span>          </div>  </div>  </li><li class="tree-item" id="ast_node_40" data-category="literal" data-head="Literal:int" data-line="16" data-col="25">  <div class="node-row" onclick="selectNode('ast_node_40')">    <span class="tree-toggle-placeholder"></span>    <div class="node-card cat-literal">      <span class="badge badge-cat badge-literal">Literal / Leaf</span>      <span class="node-label">Literal:int(3)</span>      <span class="badge badge-loc" title="Source coordinate">@16:25</span>          </div>  </div>  </li></ul></li><li class="tree-item" id="ast_node_41" data-category="other" data-head="Assign" data-line="16" data-col="28">  <div class="node-row" onclick="selectNode('ast_node_41')">    <button class="tree-toggle" onclick="toggleNode('ast_node_41', event)" title="Collapse/Expand"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>    <div class="node-card cat-other">      <span class="badge badge-cat badge-other">Node</span>      <span class="node-label">Assign(j)</span>      <span class="badge badge-loc" title="Source coordinate">@16:28</span>      <span class="badge badge-count" title="Subtree nodes">1 child</span>    </div>  </div>  <ul class="tree-children" id="ast_node_41_children"><li class="tree-item" id="ast_node_42" data-category="expression" data-head="BinaryOp:+" data-line="16" data-col="34">  <div class="node-row" onclick="selectNode('ast_node_42')">    <button class="tree-toggle" onclick="toggleNode('ast_node_42', event)" title="Collapse/Expand"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>    <div class="node-card cat-expression">      <span class="badge badge-cat badge-expression">Expression</span>      <span class="node-label">BinaryOp:+</span>      <span class="badge badge-loc" title="Source coordinate">@16:34</span>      <span class="badge badge-count" title="Subtree nodes">2 children</span>    </div>  </div>  <ul class="tree-children" id="ast_node_42_children"><li class="tree-item" id="ast_node_43" data-category="literal" data-head="Identifier" data-line="16" data-col="32">  <div class="node-row" onclick="selectNode('ast_node_43')">    <span class="tree-toggle-placeholder"></span>    <div class="node-card cat-literal">      <span class="badge badge-cat badge-literal">Literal / Leaf</span>      <span class="node-label">Identifier(j)</span>      <span class="badge badge-loc" title="Source coordinate">@16:32</span>          </div>  </div>  </li><li class="tree-item" id="ast_node_44" data-category="literal" data-head="Literal:int" data-line="16" data-col="36">  <div class="node-row" onclick="selectNode('ast_node_44')">    <span class="tree-toggle-placeholder"></span>    <div class="node-card cat-literal">      <span class="badge badge-cat badge-literal">Literal / Leaf</span>      <span class="node-label">Literal:int(1)</span>      <span class="badge badge-loc" title="Source coordinate">@16:36</span>          </div>  </div>  </li></ul></li></ul></li><li class="tree-item" id="ast_node_45" data-category="structure" data-head="Block" data-line="16" data-col="39">  <div class="node-row" onclick="selectNode('ast_node_45')">    <button class="tree-toggle" onclick="toggleNode('ast_node_45', event)" title="Collapse/Expand"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>    <div class="node-card cat-structure">      <span class="badge badge-cat badge-structure">Structure</span>      <span class="node-label">Block</span>      <span class="badge badge-loc" title="Source coordinate">@16:39</span>      <span class="badge badge-count" title="Subtree nodes">1 child</span>    </div>  </div>  <ul class="tree-children" id="ast_node_45_children"><li class="tree-item" id="ast_node_46" data-category="control" data-head="ExprStmt" data-line="17" data-col="14">  <div class="node-row" onclick="selectNode('ast_node_46')">    <button class="tree-toggle" onclick="toggleNode('ast_node_46', event)" title="Collapse/Expand"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>    <div class="node-card cat-control">      <span class="badge badge-cat badge-control">Control Flow</span>      <span class="node-label">ExprStmt</span>      <span class="badge badge-loc" title="Source coordinate">@17:14</span>      <span class="badge badge-count" title="Subtree nodes">1 child</span>    </div>  </div>  <ul class="tree-children" id="ast_node_46_children"><li class="tree-item" id="ast_node_47" data-category="other" data-head="Call" data-line="17" data-col="14">  <div class="node-row" onclick="selectNode('ast_node_47')">    <button class="tree-toggle" onclick="toggleNode('ast_node_47', event)" title="Collapse/Expand"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>    <div class="node-card cat-other">      <span class="badge badge-cat badge-other">Node</span>      <span class="node-label">Call(print)</span>      <span class="badge badge-loc" title="Source coordinate">@17:14</span>      <span class="badge badge-count" title="Subtree nodes">1 child</span>    </div>  </div>  <ul class="tree-children" id="ast_node_47_children"><li class="tree-item" id="ast_node_48" data-category="literal" data-head="Identifier" data-line="17" data-col="15">  <div class="node-row" onclick="selectNode('ast_node_48')">    <span class="tree-toggle-placeholder"></span>    <div class="node-card cat-literal">      <span class="badge badge-cat badge-literal">Literal / Leaf</span>      <span class="node-label">Identifier(j)</span>      <span class="badge badge-loc" title="Source coordinate">@17:15</span>          </div>  </div>  </li></ul></li></ul></li></ul></li></ul></li><li class="tree-item" id="ast_node_49" data-category="control" data-head="ReturnStmt" data-line="19" data-col="5">  <div class="node-row" onclick="selectNode('ast_node_49')">    <button class="tree-toggle" onclick="toggleNode('ast_node_49', event)" title="Collapse/Expand"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>    <div class="node-card cat-control">      <span class="badge badge-cat badge-control">Control Flow</span>      <span class="node-label">ReturnStmt</span>      <span class="badge badge-loc" title="Source coordinate">@19:5</span>      <span class="badge badge-count" title="Subtree nodes">1 child</span>    </div>  </div>  <ul class="tree-children" id="ast_node_49_children"><li class="tree-item" id="ast_node_50" data-category="other" data-head="Call" data-line="19" data-col="20">  <div class="node-row" onclick="selectNode('ast_node_50')">    <button class="tree-toggle" onclick="toggleNode('ast_node_50', event)" title="Collapse/Expand"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>    <div class="node-card cat-other">      <span class="badge badge-cat badge-other">Node</span>      <span class="node-label">Call(classify)</span>      <span class="badge badge-loc" title="Source coordinate">@19:20</span>      <span class="badge badge-count" title="Subtree nodes">1 child</span>    </div>  </div>  <ul class="tree-children" id="ast_node_50_children"><li class="tree-item" id="ast_node_51" data-category="literal" data-head="Identifier" data-line="19" data-col="21">  <div class="node-row" onclick="selectNode('ast_node_51')">    <span class="tree-toggle-placeholder"></span>    <div class="node-card cat-literal">      <span class="badge badge-cat badge-literal">Literal / Leaf</span>      <span class="node-label">Identifier(a)</span>      <span class="badge badge-loc" title="Source coordinate">@19:21</span>          </div>  </div>  </li></ul></li></ul></li></ul></li></ul></li></ul></li>
+      </ul>
+    </main>
+
+    <aside class="panel-inspector" id="inspectorPanel">
+      <div class="panel-header">
+        <span>NODE INSPECTOR</span>
+        <span id="inspActiveBadge" class="badge badge-structure" style="display:none;"></span>
+      </div>
+      <div class="inspector-body" id="inspectorContent">
+        <div class="insp-empty">
+          <svg viewBox="0 0 24 24" width="36" height="36" style="opacity: 0.4;"><path fill="currentColor" d="M12 2A10 10 0 0 0 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2m1 15h-2v-6h2v6m0-8h-2V7h2v2Z"/></svg>
+          <div>Click any AST node in the tree to inspect its properties, coordinates, and subtree structure.</div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="toast" id="toastMessage">Copied to clipboard!</div>
+
+  <script>
+    const NODES_DATA = {"ast_node_0": {"id": "ast_node_0", "head": "Program", "category": "structure", "label": "Program", "line": 1, "column": 1, "depth": 0, "total_subnodes": 52, "children_ids": ["ast_node_1", "ast_node_16"], "parent_id": null}, "ast_node_1": {"id": "ast_node_1", "head": "FunctionDecl", "category": "function", "label": "FunctionDecl(classify)", "line": 2, "column": 1, "depth": 1, "total_subnodes": 15, "children_ids": ["ast_node_2", "ast_node_3"], "parent_id": "ast_node_0"}, "ast_node_2": {"id": "ast_node_2", "head": "Param", "category": "function", "label": "Param(x)", "line": 2, "column": 15, "depth": 2, "total_subnodes": 1, "children_ids": [], "parent_id": "ast_node_1"}, "ast_node_3": {"id": "ast_node_3", "head": "Block", "category": "structure", "label": "Block", "line": 2, "column": 18, "depth": 2, "total_subnodes": 13, "children_ids": ["ast_node_4"], "parent_id": "ast_node_1"}, "ast_node_4": {"id": "ast_node_4", "head": "IfStmt", "category": "control", "label": "IfStmt", "line": 3, "column": 5, "depth": 3, "total_subnodes": 12, "children_ids": ["ast_node_5", "ast_node_8", "ast_node_12"], "parent_id": "ast_node_3"}, "ast_node_5": {"id": "ast_node_5", "head": "BinaryOp:<", "category": "expression", "label": "BinaryOp:<", "line": 3, "column": 11, "depth": 4, "total_subnodes": 3, "children_ids": ["ast_node_6", "ast_node_7"], "parent_id": "ast_node_4"}, "ast_node_6": {"id": "ast_node_6", "head": "Identifier", "category": "literal", "label": "Identifier(x)", "line": 3, "column": 9, "depth": 5, "total_subnodes": 1, "children_ids": [], "parent_id": "ast_node_5"}, "ast_node_7": {"id": "ast_node_7", "head": "Literal:int", "category": "literal", "label": "Literal:int(0)", "line": 3, "column": 13, "depth": 5, "total_subnodes": 1, "children_ids": [], "parent_id": "ast_node_5"}, "ast_node_8": {"id": "ast_node_8", "head": "Block", "category": "structure", "label": "Block", "line": 3, "column": 16, "depth": 4, "total_subnodes": 4, "children_ids": ["ast_node_9"], "parent_id": "ast_node_4"}, "ast_node_9": {"id": "ast_node_9", "head": "ExprStmt", "category": "control", "label": "ExprStmt", "line": 4, "column": 14, "depth": 5, "total_subnodes": 3, "children_ids": ["ast_node_10"], "parent_id": "ast_node_8"}, "ast_node_10": {"id": "ast_node_10", "head": "Call", "category": "other", "label": "Call(print)", "line": 4, "column": 14, "depth": 6, "total_subnodes": 2, "children_ids": ["ast_node_11"], "parent_id": "ast_node_9"}, "ast_node_11": {"id": "ast_node_11", "head": "Literal:string", "category": "literal", "label": "Literal:string(\"negative\")", "line": 4, "column": 15, "depth": 7, "total_subnodes": 1, "children_ids": [], "parent_id": "ast_node_10"}, "ast_node_12": {"id": "ast_node_12", "head": "Block", "category": "structure", "label": "Block", "line": 5, "column": 12, "depth": 4, "total_subnodes": 4, "children_ids": ["ast_node_13"], "parent_id": "ast_node_4"}, "ast_node_13": {"id": "ast_node_13", "head": "ExprStmt", "category": "control", "label": "ExprStmt", "line": 6, "column": 14, "depth": 5, "total_subnodes": 3, "children_ids": ["ast_node_14"], "parent_id": "ast_node_12"}, "ast_node_14": {"id": "ast_node_14", "head": "Call", "category": "other", "label": "Call(print)", "line": 6, "column": 14, "depth": 6, "total_subnodes": 2, "children_ids": ["ast_node_15"], "parent_id": "ast_node_13"}, "ast_node_15": {"id": "ast_node_15", "head": "Literal:string", "category": "literal", "label": "Literal:string(\"non-negative\")", "line": 6, "column": 15, "depth": 7, "total_subnodes": 1, "children_ids": [], "parent_id": "ast_node_14"}, "ast_node_16": {"id": "ast_node_16", "head": "FunctionDecl", "category": "function", "label": "FunctionDecl(main)", "line": 10, "column": 1, "depth": 1, "total_subnodes": 36, "children_ids": ["ast_node_17"], "parent_id": "ast_node_0"}, "ast_node_17": {"id": "ast_node_17", "head": "Block", "category": "structure", "label": "Block", "line": 10, "column": 13, "depth": 2, "total_subnodes": 35, "children_ids": ["ast_node_18", "ast_node_24", "ast_node_26", "ast_node_35", "ast_node_49"], "parent_id": "ast_node_16"}, "ast_node_18": {"id": "ast_node_18", "head": "VarDecl", "category": "variable", "label": "VarDecl(let, a)", "line": 11, "column": 5, "depth": 3, "total_subnodes": 6, "children_ids": ["ast_node_19"], "parent_id": "ast_node_17"}, "ast_node_19": {"id": "ast_node_19", "head": "BinaryOp:+", "category": "expression", "label": "BinaryOp:+", "line": 11, "column": 15, "depth": 4, "total_subnodes": 5, "children_ids": ["ast_node_20", "ast_node_21"], "parent_id": "ast_node_18"}, "ast_node_20": {"id": "ast_node_20", "head": "Literal:int", "category": "literal", "label": "Literal:int(5)", "line": 11, "column": 13, "depth": 5, "total_subnodes": 1, "children_ids": [], "parent_id": "ast_node_19"}, "ast_node_21": {"id": "ast_node_21", "head": "BinaryOp:*", "category": "expression", "label": "BinaryOp:*", "line": 11, "column": 19, "depth": 5, "total_subnodes": 3, "children_ids": ["ast_node_22", "ast_node_23"], "parent_id": "ast_node_19"}, "ast_node_22": {"id": "ast_node_22", "head": "Literal:int", "category": "literal", "label": "Literal:int(3)", "line": 11, "column": 17, "depth": 6, "total_subnodes": 1, "children_ids": [], "parent_id": "ast_node_21"}, "ast_node_23": {"id": "ast_node_23", "head": "Literal:int", "category": "literal", "label": "Literal:int(2)", "line": 11, "column": 21, "depth": 6, "total_subnodes": 1, "children_ids": [], "parent_id": "ast_node_21"}, "ast_node_24": {"id": "ast_node_24", "head": "VarDecl", "category": "variable", "label": "VarDecl(int, i)", "line": 12, "column": 5, "depth": 3, "total_subnodes": 2, "children_ids": ["ast_node_25"], "parent_id": "ast_node_17"}, "ast_node_25": {"id": "ast_node_25", "head": "Literal:int", "category": "literal", "label": "Literal:int(0)", "line": 12, "column": 13, "depth": 4, "total_subnodes": 1, "children_ids": [], "parent_id": "ast_node_24"}, "ast_node_26": {"id": "ast_node_26", "head": "WhileStmt", "category": "control", "label": "WhileStmt", "line": 13, "column": 5, "depth": 3, "total_subnodes": 9, "children_ids": ["ast_node_27", "ast_node_30"], "parent_id": "ast_node_17"}, "ast_node_27": {"id": "ast_node_27", "head": "BinaryOp:<", "category": "expression", "label": "BinaryOp:<", "line": 13, "column": 14, "depth": 4, "total_subnodes": 3, "children_ids": ["ast_node_28", "ast_node_29"], "parent_id": "ast_node_26"}, "ast_node_28": {"id": "ast_node_28", "head": "Identifier", "category": "literal", "label": "Identifier(i)", "line": 13, "column": 12, "depth": 5, "total_subnodes": 1, "children_ids": [], "parent_id": "ast_node_27"}, "ast_node_29": {"id": "ast_node_29", "head": "Literal:int", "category": "literal", "label": "Literal:int(10)", "line": 13, "column": 16, "depth": 5, "total_subnodes": 1, "children_ids": [], "parent_id": "ast_node_27"}, "ast_node_30": {"id": "ast_node_30", "head": "Block", "category": "structure", "label": "Block", "line": 13, "column": 20, "depth": 4, "total_subnodes": 5, "children_ids": ["ast_node_31"], "parent_id": "ast_node_26"}, "ast_node_31": {"id": "ast_node_31", "head": "Assign", "category": "other", "label": "Assign(i)", "line": 14, "column": 9, "depth": 5, "total_subnodes": 4, "children_ids": ["ast_node_32"], "parent_id": "ast_node_30"}, "ast_node_32": {"id": "ast_node_32", "head": "BinaryOp:+", "category": "expression", "label": "BinaryOp:+", "line": 14, "column": 15, "depth": 6, "total_subnodes": 3, "children_ids": ["ast_node_33", "ast_node_34"], "parent_id": "ast_node_31"}, "ast_node_33": {"id": "ast_node_33", "head": "Identifier", "category": "literal", "label": "Identifier(i)", "line": 14, "column": 13, "depth": 7, "total_subnodes": 1, "children_ids": [], "parent_id": "ast_node_32"}, "ast_node_34": {"id": "ast_node_34", "head": "Literal:int", "category": "literal", "label": "Literal:int(1)", "line": 14, "column": 17, "depth": 7, "total_subnodes": 1, "children_ids": [], "parent_id": "ast_node_32"}, "ast_node_35": {"id": "ast_node_35", "head": "ForStmt", "category": "control", "label": "ForStmt", "line": 16, "column": 5, "depth": 3, "total_subnodes": 14, "children_ids": ["ast_node_36", "ast_node_38", "ast_node_41", "ast_node_45"], "parent_id": "ast_node_17"}, "ast_node_36": {"id": "ast_node_36", "head": "VarDecl", "category": "variable", "label": "VarDecl(let, j)", "line": 16, "column": 10, "depth": 4, "total_subnodes": 2, "children_ids": ["ast_node_37"], "parent_id": "ast_node_35"}, "ast_node_37": {"id": "ast_node_37", "head": "Literal:int", "category": "literal", "label": "Literal:int(0)", "line": 16, "column": 18, "depth": 5, "total_subnodes": 1, "children_ids": [], "parent_id": "ast_node_36"}, "ast_node_38": {"id": "ast_node_38", "head": "BinaryOp:<", "category": "expression", "label": "BinaryOp:<", "line": 16, "column": 23, "depth": 4, "total_subnodes": 3, "children_ids": ["ast_node_39", "ast_node_40"], "parent_id": "ast_node_35"}, "ast_node_39": {"id": "ast_node_39", "head": "Identifier", "category": "literal", "label": "Identifier(j)", "line": 16, "column": 21, "depth": 5, "total_subnodes": 1, "children_ids": [], "parent_id": "ast_node_38"}, "ast_node_40": {"id": "ast_node_40", "head": "Literal:int", "category": "literal", "label": "Literal:int(3)", "line": 16, "column": 25, "depth": 5, "total_subnodes": 1, "children_ids": [], "parent_id": "ast_node_38"}, "ast_node_41": {"id": "ast_node_41", "head": "Assign", "category": "other", "label": "Assign(j)", "line": 16, "column": 28, "depth": 4, "total_subnodes": 4, "children_ids": ["ast_node_42"], "parent_id": "ast_node_35"}, "ast_node_42": {"id": "ast_node_42", "head": "BinaryOp:+", "category": "expression", "label": "BinaryOp:+", "line": 16, "column": 34, "depth": 5, "total_subnodes": 3, "children_ids": ["ast_node_43", "ast_node_44"], "parent_id": "ast_node_41"}, "ast_node_43": {"id": "ast_node_43", "head": "Identifier", "category": "literal", "label": "Identifier(j)", "line": 16, "column": 32, "depth": 6, "total_subnodes": 1, "children_ids": [], "parent_id": "ast_node_42"}, "ast_node_44": {"id": "ast_node_44", "head": "Literal:int", "category": "literal", "label": "Literal:int(1)", "line": 16, "column": 36, "depth": 6, "total_subnodes": 1, "children_ids": [], "parent_id": "ast_node_42"}, "ast_node_45": {"id": "ast_node_45", "head": "Block", "category": "structure", "label": "Block", "line": 16, "column": 39, "depth": 4, "total_subnodes": 4, "children_ids": ["ast_node_46"], "parent_id": "ast_node_35"}, "ast_node_46": {"id": "ast_node_46", "head": "ExprStmt", "category": "control", "label": "ExprStmt", "line": 17, "column": 14, "depth": 5, "total_subnodes": 3, "children_ids": ["ast_node_47"], "parent_id": "ast_node_45"}, "ast_node_47": {"id": "ast_node_47", "head": "Call", "category": "other", "label": "Call(print)", "line": 17, "column": 14, "depth": 6, "total_subnodes": 2, "children_ids": ["ast_node_48"], "parent_id": "ast_node_46"}, "ast_node_48": {"id": "ast_node_48", "head": "Identifier", "category": "literal", "label": "Identifier(j)", "line": 17, "column": 15, "depth": 7, "total_subnodes": 1, "children_ids": [], "parent_id": "ast_node_47"}, "ast_node_49": {"id": "ast_node_49", "head": "ReturnStmt", "category": "control", "label": "ReturnStmt", "line": 19, "column": 5, "depth": 3, "total_subnodes": 3, "children_ids": ["ast_node_50"], "parent_id": "ast_node_17"}, "ast_node_50": {"id": "ast_node_50", "head": "Call", "category": "other", "label": "Call(classify)", "line": 19, "column": 20, "depth": 4, "total_subnodes": 2, "children_ids": ["ast_node_51"], "parent_id": "ast_node_49"}, "ast_node_51": {"id": "ast_node_51", "head": "Identifier", "category": "literal", "label": "Identifier(a)", "line": 19, "column": 21, "depth": 5, "total_subnodes": 1, "children_ids": [], "parent_id": "ast_node_50"}};
+    const FULL_JSON_AST = "{\n  \"kind\": \"Program\",\n  \"line\": 1,\n  \"column\": 1,\n  \"children\": [\n    {\n      \"kind\": \"FunctionDecl\",\n      \"line\": 2,\n      \"column\": 1,\n      \"attributes\": [\n        \"classify\"\n      ],\n      \"children\": [\n        {\n          \"kind\": \"Param\",\n          \"line\": 2,\n          \"column\": 15,\n          \"attributes\": [\n            \"x\"\n          ]\n        },\n        {\n          \"kind\": \"Block\",\n          \"line\": 2,\n          \"column\": 18,\n          \"children\": [\n            {\n              \"kind\": \"IfStmt\",\n              \"line\": 3,\n              \"column\": 5,\n              \"children\": [\n                {\n                  \"kind\": \"BinaryOp:<\",\n                  \"line\": 3,\n                  \"column\": 11,\n                  \"children\": [\n                    {\n                      \"kind\": \"Identifier\",\n                      \"line\": 3,\n                      \"column\": 9,\n                      \"attributes\": [\n                        \"x\"\n                      ]\n                    },\n                    {\n                      \"kind\": \"Literal:int\",\n                      \"line\": 3,\n                      \"column\": 13,\n                      \"attributes\": [\n                        \"0\"\n                      ]\n                    }\n                  ]\n                },\n                {\n                  \"kind\": \"Block\",\n                  \"line\": 3,\n                  \"column\": 16,\n                  \"children\": [\n                    {\n                      \"kind\": \"ExprStmt\",\n                      \"line\": 4,\n                      \"column\": 14,\n                      \"children\": [\n                        {\n                          \"kind\": \"Call\",\n                          \"line\": 4,\n                          \"column\": 14,\n                          \"attributes\": [\n                            \"print\"\n                          ],\n                          \"children\": [\n                            {\n                              \"kind\": \"Literal:string\",\n                              \"line\": 4,\n                              \"column\": 15,\n                              \"attributes\": [\n                                \"\\\"negative\\\"\"\n                              ]\n                            }\n                          ]\n                        }\n                      ]\n                    }\n                  ]\n                },\n                {\n                  \"kind\": \"Block\",\n                  \"line\": 5,\n                  \"column\": 12,\n                  \"children\": [\n                    {\n                      \"kind\": \"ExprStmt\",\n                      \"line\": 6,\n                      \"column\": 14,\n                      \"children\": [\n                        {\n                          \"kind\": \"Call\",\n                          \"line\": 6,\n                          \"column\": 14,\n                          \"attributes\": [\n                            \"print\"\n                          ],\n                          \"children\": [\n                            {\n                              \"kind\": \"Literal:string\",\n                              \"line\": 6,\n                              \"column\": 15,\n                              \"attributes\": [\n                                \"\\\"non-negative\\\"\"\n                              ]\n                            }\n                          ]\n                        }\n                      ]\n                    }\n                  ]\n                }\n              ]\n            }\n          ]\n        }\n      ]\n    },\n    {\n      \"kind\": \"FunctionDecl\",\n      \"line\": 10,\n      \"column\": 1,\n      \"attributes\": [\n        \"main\"\n      ],\n      \"children\": [\n        {\n          \"kind\": \"Block\",\n          \"line\": 10,\n          \"column\": 13,\n          \"children\": [\n            {\n              \"kind\": \"VarDecl\",\n              \"line\": 11,\n              \"column\": 5,\n              \"attributes\": [\n                \"let\",\n                \"a\"\n              ],\n              \"children\": [\n                {\n                  \"kind\": \"BinaryOp:+\",\n                  \"line\": 11,\n                  \"column\": 15,\n                  \"children\": [\n                    {\n                      \"kind\": \"Literal:int\",\n                      \"line\": 11,\n                      \"column\": 13,\n                      \"attributes\": [\n                        \"5\"\n                      ]\n                    },\n                    {\n                      \"kind\": \"BinaryOp:*\",\n                      \"line\": 11,\n                      \"column\": 19,\n                      \"children\": [\n                        {\n                          \"kind\": \"Literal:int\",\n                          \"line\": 11,\n                          \"column\": 17,\n                          \"attributes\": [\n                            \"3\"\n                          ]\n                        },\n                        {\n                          \"kind\": \"Literal:int\",\n                          \"line\": 11,\n                          \"column\": 21,\n                          \"attributes\": [\n                            \"2\"\n                          ]\n                        }\n                      ]\n                    }\n                  ]\n                }\n              ]\n            },\n            {\n              \"kind\": \"VarDecl\",\n              \"line\": 12,\n              \"column\": 5,\n              \"attributes\": [\n                \"int\",\n                \"i\"\n              ],\n              \"children\": [\n                {\n                  \"kind\": \"Literal:int\",\n                  \"line\": 12,\n                  \"column\": 13,\n                  \"attributes\": [\n                    \"0\"\n                  ]\n                }\n              ]\n            },\n            {\n              \"kind\": \"WhileStmt\",\n              \"line\": 13,\n              \"column\": 5,\n              \"children\": [\n                {\n                  \"kind\": \"BinaryOp:<\",\n                  \"line\": 13,\n                  \"column\": 14,\n                  \"children\": [\n                    {\n                      \"kind\": \"Identifier\",\n                      \"line\": 13,\n                      \"column\": 12,\n                      \"attributes\": [\n                        \"i\"\n                      ]\n                    },\n                    {\n                      \"kind\": \"Literal:int\",\n                      \"line\": 13,\n                      \"column\": 16,\n                      \"attributes\": [\n                        \"10\"\n                      ]\n                    }\n                  ]\n                },\n                {\n                  \"kind\": \"Block\",\n                  \"line\": 13,\n                  \"column\": 20,\n                  \"children\": [\n                    {\n                      \"kind\": \"Assign\",\n                      \"line\": 14,\n                      \"column\": 9,\n                      \"attributes\": [\n                        \"i\"\n                      ],\n                      \"children\": [\n                        {\n                          \"kind\": \"BinaryOp:+\",\n                          \"line\": 14,\n                          \"column\": 15,\n                          \"children\": [\n                            {\n                              \"kind\": \"Identifier\",\n                              \"line\": 14,\n                              \"column\": 13,\n                              \"attributes\": [\n                                \"i\"\n                              ]\n                            },\n                            {\n                              \"kind\": \"Literal:int\",\n                              \"line\": 14,\n                              \"column\": 17,\n                              \"attributes\": [\n                                \"1\"\n                              ]\n                            }\n                          ]\n                        }\n                      ]\n                    }\n                  ]\n                }\n              ]\n            },\n            {\n              \"kind\": \"ForStmt\",\n              \"line\": 16,\n              \"column\": 5,\n              \"children\": [\n                {\n                  \"kind\": \"VarDecl\",\n                  \"line\": 16,\n                  \"column\": 10,\n                  \"attributes\": [\n                    \"let\",\n                    \"j\"\n                  ],\n                  \"children\": [\n                    {\n                      \"kind\": \"Literal:int\",\n                      \"line\": 16,\n                      \"column\": 18,\n                      \"attributes\": [\n                        \"0\"\n                      ]\n                    }\n                  ]\n                },\n                {\n                  \"kind\": \"BinaryOp:<\",\n                  \"line\": 16,\n                  \"column\": 23,\n                  \"children\": [\n                    {\n                      \"kind\": \"Identifier\",\n                      \"line\": 16,\n                      \"column\": 21,\n                      \"attributes\": [\n                        \"j\"\n                      ]\n                    },\n                    {\n                      \"kind\": \"Literal:int\",\n                      \"line\": 16,\n                      \"column\": 25,\n                      \"attributes\": [\n                        \"3\"\n                      ]\n                    }\n                  ]\n                },\n                {\n                  \"kind\": \"Assign\",\n                  \"line\": 16,\n                  \"column\": 28,\n                  \"attributes\": [\n                    \"j\"\n                  ],\n                  \"children\": [\n                    {\n                      \"kind\": \"BinaryOp:+\",\n                      \"line\": 16,\n                      \"column\": 34,\n                      \"children\": [\n                        {\n                          \"kind\": \"Identifier\",\n                          \"line\": 16,\n                          \"column\": 32,\n                          \"attributes\": [\n                            \"j\"\n                          ]\n                        },\n                        {\n                          \"kind\": \"Literal:int\",\n                          \"line\": 16,\n                          \"column\": 36,\n                          \"attributes\": [\n                            \"1\"\n                          ]\n                        }\n                      ]\n                    }\n                  ]\n                },\n                {\n                  \"kind\": \"Block\",\n                  \"line\": 16,\n                  \"column\": 39,\n                  \"children\": [\n                    {\n                      \"kind\": \"ExprStmt\",\n                      \"line\": 17,\n                      \"column\": 14,\n                      \"children\": [\n                        {\n                          \"kind\": \"Call\",\n                          \"line\": 17,\n                          \"column\": 14,\n                          \"attributes\": [\n                            \"print\"\n                          ],\n                          \"children\": [\n                            {\n                              \"kind\": \"Identifier\",\n                              \"line\": 17,\n                              \"column\": 15,\n                              \"attributes\": [\n                                \"j\"\n                              ]\n                            }\n                          ]\n                        }\n                      ]\n                    }\n                  ]\n                }\n              ]\n            },\n            {\n              \"kind\": \"ReturnStmt\",\n              \"line\": 19,\n              \"column\": 5,\n              \"children\": [\n                {\n                  \"kind\": \"Call\",\n                  \"line\": 19,\n                  \"column\": 20,\n                  \"attributes\": [\n                    \"classify\"\n                  ],\n                  \"children\": [\n                    {\n                      \"kind\": \"Identifier\",\n                      \"line\": 19,\n                      \"column\": 21,\n                      \"attributes\": [\n                        \"a\"\n                      ]\n                    }\n                  ]\n                }\n              ]\n            }\n          ]\n        }\n      ]\n    }\n  ]\n}";
+    let selectedNodeId = null;
+
+    function toggleNode(nodeId, event) {
+      if (event) event.stopPropagation();
+      const item = document.getElementById(nodeId);
+      if (item) {
+        item.classList.toggle('collapsed');
+      }
+    }
+
+    function expandAll() {
+      document.querySelectorAll('.tree-item').forEach(el => el.classList.remove('collapsed'));
+    }
+
+    function collapseAll() {
+      document.querySelectorAll('.tree-children .tree-item').forEach(el => {
+        if (el.querySelector('.tree-children')) {
+          el.classList.add('collapsed');
+        }
+      });
+    }
+
+    function selectNode(nodeId) {
+      document.querySelectorAll('.tree-item.selected').forEach(el => el.classList.remove('selected'));
+      const item = document.getElementById(nodeId);
+      if (!item) return;
+      item.classList.add('selected');
+      selectedNodeId = nodeId;
+
+      const data = NODES_DATA[nodeId];
+      if (!data) return;
+
+      document.querySelectorAll('.src-line.active-line').forEach(el => el.classList.remove('active-line'));
+      if (data.line) {
+        const srcLine = document.getElementById('src_line_' + data.line);
+        if (srcLine) {
+          srcLine.classList.add('active-line');
+          srcLine.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+
+      const insp = document.getElementById('inspectorContent');
+      const badge = document.getElementById('inspActiveBadge');
+      badge.style.display = 'inline-block';
+      badge.className = 'badge badge-' + data.category;
+      badge.textContent = data.category.toUpperCase();
+
+      insp.innerHTML = `
+        <div class="insp-card">
+          <div class="insp-title">Selected Node</div>
+          <div class="insp-node-name">${escapeHtml(data.label)}</div>
+          <div class="insp-field"><span class="insp-key">Node Type:</span><span class="insp-val">${escapeHtml(data.head)}</span></div>
+          <div class="insp-field"><span class="insp-key">Category:</span><span class="insp-val">${data.category}</span></div>
+          <div class="insp-field"><span class="insp-key">Coordinates:</span><span class="insp-val">${data.line ? 'Line ' + data.line + ', Col ' + data.column : 'N/A'}</span></div>
+          <div class="insp-field"><span class="insp-key">Tree Depth:</span><span class="insp-val">Level ${data.depth}</span></div>
+          <div class="insp-field"><span class="insp-key">Subtree Nodes:</span><span class="insp-val">${data.total_subnodes}</span></div>
+        </div>
+        <div class="insp-card">
+          <div class="insp-title">Subtree Info</div>
+          <div class="insp-field"><span class="insp-key">Direct Children:</span><span class="insp-val">${data.children_ids.length}</span></div>
+          <div class="insp-field"><span class="insp-key">Node ID:</span><span class="insp-val">${data.id}</span></div>
+        </div>
+      `;
+    }
+
+    function handleSearch(query) {
+      query = query.trim().toLowerCase();
+      const countEl = document.getElementById('searchCount');
+      document.querySelectorAll('.tree-item').forEach(el => el.classList.remove('search-match'));
+
+      if (!query) {
+        countEl.textContent = '';
+        return;
+      }
+
+      let matches = 0;
+      document.querySelectorAll('.tree-item').forEach(el => {
+        const label = (el.querySelector('.node-label')?.textContent || '').toLowerCase();
+        const head = (el.getAttribute('data-head') || '').toLowerCase();
+        if (label.includes(query) || head.includes(query)) {
+          el.classList.add('search-match');
+          matches++;
+          let parent = el.parentElement.closest('.tree-item');
+          while (parent) {
+            parent.classList.remove('collapsed');
+            parent = parent.parentElement.closest('.tree-item');
+          }
+        }
+      });
+      countEl.textContent = matches > 0 ? `${matches} found` : 'No match';
+    }
+
+    function filterCategory(cat, chip) {
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      document.querySelectorAll('.tree-item').forEach(el => {
+        if (cat === 'all' || el.getAttribute('data-category') === cat) {
+          el.style.opacity = '1';
+          el.style.pointerEvents = 'auto';
+        } else {
+          el.style.opacity = '0.25';
+        }
+      });
+    }
+
+    function toggleTheme() {
+      const html = document.documentElement;
+      const current = html.getAttribute('data-theme') || 'dark';
+      html.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+    }
+
+    function toggleSourcePanel() {
+      const p = document.getElementById('sourcePanel');
+      p.style.width = p.style.width === '0px' ? '320px' : '0px';
+    }
+
+    function copyAstJson() {
+      navigator.clipboard.writeText(FULL_JSON_AST).then(() => {
+        showToast('JSON AST copied to clipboard!');
+      }).catch(() => {
+        showToast('Unable to copy automatically');
+      });
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toastMessage');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2000);
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      selectNode('ast_node_0');
+    });
+  </script>
+</body>
+</html>

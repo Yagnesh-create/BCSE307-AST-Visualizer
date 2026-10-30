@@ -1,0 +1,236 @@
+[
+  {
+    "test": "lexer.int_literal",
+    "status": "PASS",
+    "expected": "INT_LIT(42)",
+    "actual": "INT_LIT(42)"
+  },
+  {
+    "test": "lexer.multi_char_operators",
+    "status": "PASS",
+    "expected": "contains EQ,AND,LTE",
+    "actual": "all present"
+  },
+  {
+    "test": "lexer.string_escape",
+    "status": "PASS",
+    "expected": "escaped \\n",
+    "actual": "'hello\\nworld'"
+  },
+  {
+    "test": "lexer.line_comment_skipped",
+    "status": "PASS",
+    "expected": "first=KW_LET",
+    "actual": "KW_LET"
+  },
+  {
+    "test": "lexer.block_comment_skipped",
+    "status": "PASS",
+    "expected": "first=KW_INT",
+    "actual": "KW_INT"
+  },
+  {
+    "test": "lexer.invalid_char_raises",
+    "status": "PASS",
+    "expected": "LexError raised",
+    "actual": "LexError"
+  },
+  {
+    "test": "lexer.unterminated_string",
+    "status": "PASS",
+    "expected": "LexError raised",
+    "actual": "LexError"
+  },
+  {
+    "test": "parser.var_decl_with_precedence",
+    "status": "PASS",
+    "expected": "VarDecl\u2192BinaryOp:+",
+    "actual": "VarDecl\u2192BinaryOp:+"
+  },
+  {
+    "test": "parser.if_else",
+    "status": "PASS",
+    "expected": "IfStmt with else",
+    "actual": "IfStmt with else"
+  },
+  {
+    "test": "parser.function_decl",
+    "status": "PASS",
+    "expected": "FunctionDecl 2 params",
+    "actual": "FunctionDecl 2 params"
+  },
+  {
+    "test": "parser.for_loop",
+    "status": "PASS",
+    "expected": "ForStmt",
+    "actual": "ForStmt"
+  },
+  {
+    "test": "parser.boundary_nested_parens",
+    "status": "PASS",
+    "expected": "BinaryOp:/",
+    "actual": "BinaryOp:/"
+  },
+  {
+    "test": "parser.missing_expr_raises",
+    "status": "PASS",
+    "expected": "ParseError raised",
+    "actual": "ParseError"
+  },
+  {
+    "test": "parser.missing_paren_raises",
+    "status": "PASS",
+    "expected": "ParseError raised",
+    "actual": "ParseError"
+  },
+  {
+    "test": "parser.missing_semicolon_raises",
+    "status": "PASS",
+    "expected": "ParseError raised",
+    "actual": "ParseError"
+  },
+  {
+    "test": "parser.empty_program",
+    "status": "PASS",
+    "expected": "Program 0 stmts",
+    "actual": "Program 0 stmts"
+  },
+  {
+    "test": "parser.single_expression_stmt",
+    "status": "PASS",
+    "expected": "ExprStmt",
+    "actual": "ExprStmt"
+  },
+  {
+    "test": "parser.error_recovery_collects_multiple",
+    "status": "PASS",
+    "expected": ">=2 errors, >=1 recovered stmt",
+    "actual": "2 errors, 1 stmts"
+  },
+  {
+    "test": "printer.text_tree_contains_nodes",
+    "status": "PASS",
+    "expected": "Program,VarDecl,Literal:int",
+    "actual": "all 3 found"
+  },
+  {
+    "test": "printer.sexpr_well_formed",
+    "status": "PASS",
+    "expected": "starts (Program, balanced",
+    "actual": "(3/3)"
+  },
+  {
+    "test": "json.ast_serializes",
+    "status": "PASS",
+    "expected": "valid JSON with kind=Program",
+    "actual": "valid JSON, kind=Program"
+  },
+  {
+    "test": "html.output_well_formed",
+    "status": "PASS",
+    "expected": "<!DOCTYPE...>, closes html, has Program",
+    "actual": "well formed"
+  },
+  {
+    "test": "visualizer.dot_well_formed",
+    "status": "PASS",
+    "expected": "digraph ... }",
+    "actual": "digraph ... }"
+  },
+  {
+    "test": "stats.node_count_positive",
+    "status": "PASS",
+    "expected": "nodes>0, depth>=2",
+    "actual": "nodes=7, depth=5"
+  },
+  {
+    "test": "semantic.valid_program_zero_issues",
+    "status": "PASS",
+    "expected": "0 issues",
+    "actual": "0 issues"
+  },
+  {
+    "test": "semantic.valid_nested_scopes",
+    "status": "PASS",
+    "expected": "0 issues",
+    "actual": "0 issues"
+  },
+  {
+    "test": "semantic.valid_return_inside_function",
+    "status": "PASS",
+    "expected": "0 issues",
+    "actual": "0 issues"
+  },
+  {
+    "test": "semantic.valid_builtin_variadic_call",
+    "status": "PASS",
+    "expected": "0 issues",
+    "actual": "0 issues"
+  },
+  {
+    "test": "semantic.undeclared_identifier",
+    "status": "PASS",
+    "expected": "type=undeclared_identifier",
+    "actual": "undeclared_identifier"
+  },
+  {
+    "test": "semantic.redeclaration_detected",
+    "status": "PASS",
+    "expected": "type=redeclaration",
+    "actual": "redeclaration"
+  },
+  {
+    "test": "semantic.wrong_arity_detected",
+    "status": "PASS",
+    "expected": "type=wrong_arity",
+    "actual": "wrong_arity"
+  },
+  {
+    "test": "semantic.return_outside_function",
+    "status": "PASS",
+    "expected": "type=return_outside_function",
+    "actual": "return_outside_function"
+  },
+  {
+    "test": "semantic.assignment_to_undeclared",
+    "status": "PASS",
+    "expected": "type=assignment_undeclared",
+    "actual": "assignment_undeclared"
+  },
+  {
+    "test": "semantic.undefined_function_call",
+    "status": "PASS",
+    "expected": "type=undefined_function",
+    "actual": "undefined_function"
+  },
+  {
+    "test": "semantic.multiple_errors_collected",
+    "status": "PASS",
+    "expected": ">=3 issues, 3 types",
+    "actual": "3 issues: {'return_outside_function', 'redeclaration', 'undeclared_identifier'}"
+  },
+  {
+    "test": "semantic.issue_has_all_fields",
+    "status": "PASS",
+    "expected": "type,severity,line,column,message",
+    "actual": "all present"
+  },
+  {
+    "test": "parser.error_recovery_multi_errors",
+    "status": "PASS",
+    "expected": ">=3 errors",
+    "actual": "4 errors"
+  },
+  {
+    "test": "parser.error_recovery_partial_ast",
+    "status": "PASS",
+    "expected": ">=2 stmts, >=1 error",
+    "actual": "2 stmts, 1 errors"
+  },
+  {
+    "test": "corpus.valid_programs_52_total",
+    "status": "PASS",
+    "expected": ">=95% parse success",
+    "actual": "100.0% (52/52)"
+  }
+]

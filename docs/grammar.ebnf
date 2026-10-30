@@ -1,0 +1,41 @@
+Program         ::= Statement* EOF
+Statement       ::= FunctionDecl
+                  | VarDecl
+                  | IfStmt
+                  | WhileStmt
+                  | ForStmt
+                  | ReturnStmt
+                  | Block
+                  | ExprStmt
+
+FunctionDecl    ::= ( "func" | Type ) IDENT "(" [ ParamList ] ")" Block
+ParamList       ::= Param ( "," Param )*
+Param           ::= [ Type ] IDENT
+
+VarDecl         ::= ( "let" | Type ) IDENT [ "=" Expression ] ";"
+VarDeclNoSemi   ::= ( "let" | Type ) IDENT [ "=" Expression ]
+empty           ::= /* no tokens */
+Type            ::= "int" | "float" | "bool" | "string" | "void"
+
+IfStmt          ::= "if" "(" Expression ")" Block [ "else" ( IfStmt | Block ) ]
+WhileStmt       ::= "while" "(" Expression ")" Block
+ForStmt         ::= "for" "(" ( VarDeclNoSemi | Assignment | Expression | empty ) ";"
+                              [ Expression ] ";"
+                              ( Assignment | Expression | empty ) ")" Block
+
+ReturnStmt      ::= "return" [ Expression ] ";"
+Block           ::= "{" Statement* "}"
+ExprStmt        ::= ( Assignment | Expression ) ";"
+Assignment      ::= IDENT "=" Expression
+
+Expression      ::= LogicalOr
+LogicalOr       ::= LogicalAnd ( "||" LogicalAnd )*
+LogicalAnd      ::= Equality ( "&&" Equality )*
+Equality        ::= Relational ( ( "==" | "!=" ) Relational )*
+Relational      ::= Additive ( ( "<" | "<=" | ">" | ">=" ) Additive )*
+Additive        ::= Multiplicative ( ( "+" | "-" ) Multiplicative )*
+Multiplicative  ::= Unary ( ( "*" | "/" | "%" ) Unary )*
+Unary           ::= ( "-" | "!" ) Unary | Postfix
+Postfix         ::= Primary ( "(" [ ArgList ] ")" )*
+ArgList         ::= Expression ( "," Expression )*
+Primary         ::= INT_LIT | FLOAT_LIT | STRING_LIT | BOOL_LIT | IDENT | "(" Expression ")"

@@ -1,0 +1,52 @@
+Program
+├── FunctionDecl(classify)
+│   ├── Param(x)
+│   └── Block
+│       └── IfStmt
+│           ├── BinaryOp:<
+│           │   ├── Identifier(x)
+│           │   └── Literal:int(0)
+│           ├── Block
+│           │   └── ExprStmt
+│           │       └── Call(print)
+│           │           └── Literal:string("negative")
+│           └── Block
+│               └── ExprStmt
+│                   └── Call(print)
+│                       └── Literal:string("non-negative")
+└── FunctionDecl(main)
+    └── Block
+        ├── VarDecl(let, a)
+        │   └── BinaryOp:+
+        │       ├── Literal:int(5)
+        │       └── BinaryOp:*
+        │           ├── Literal:int(3)
+        │           └── Literal:int(2)
+        ├── VarDecl(int, i)
+        │   └── Literal:int(0)
+        ├── WhileStmt
+        │   ├── BinaryOp:<
+        │   │   ├── Identifier(i)
+        │   │   └── Literal:int(10)
+        │   └── Block
+        │       └── Assign(i)
+        │           └── BinaryOp:+
+        │               ├── Identifier(i)
+        │               └── Literal:int(1)
+        ├── ForStmt
+        │   ├── VarDecl(let, j)
+        │   │   └── Literal:int(0)
+        │   ├── BinaryOp:<
+        │   │   ├── Identifier(j)
+        │   │   └── Literal:int(3)
+        │   ├── Assign(j)
+        │   │   └── BinaryOp:+
+        │   │       ├── Identifier(j)
+        │   │       └── Literal:int(1)
+        │   └── Block
+        │       └── ExprStmt
+        │           └── Call(print)
+        │               └── Identifier(j)
+        └── ReturnStmt
+            └── Call(classify)
+                └── Identifier(a)

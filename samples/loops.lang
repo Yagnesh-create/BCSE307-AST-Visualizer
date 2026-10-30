@@ -1,0 +1,14 @@
+// Loops: while and for
+int counter = 0;
+while (counter < 5) {
+    print(counter);
+    counter = counter + 1;
+}
+
+for (let i = 0; i < 10; i = i + 1) {
+    print(i);
+}
+
+for (int step = 20; step > 0; step = step - 4) {
+    print(step);
+}

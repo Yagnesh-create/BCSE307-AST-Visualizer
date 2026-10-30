@@ -1,0 +1,43 @@
+Test Case                                    Result Expected                       Actual                              
+-----------------------------------------------------------------------------------------------------------------------
+lexer.int_literal                            PASS   INT_LIT(42)                    INT_LIT(42)                         
+lexer.multi_char_operators                   PASS   contains EQ,AND,LTE            all present                         
+lexer.string_escape                          PASS   escaped \n                     'hello\nworld'                      
+lexer.line_comment_skipped                   PASS   first=KW_LET                   KW_LET                              
+lexer.block_comment_skipped                  PASS   first=KW_INT                   KW_INT                              
+lexer.invalid_char_raises                    PASS   LexError raised                LexError                            
+lexer.unterminated_string                    PASS   LexError raised                LexError                            
+parser.var_decl_with_precedence              PASS   VarDecl→BinaryOp:+             VarDecl→BinaryOp:+                  
+parser.if_else                               PASS   IfStmt with else               IfStmt with else                    
+parser.function_decl                         PASS   FunctionDecl 2 params          FunctionDecl 2 params               
+parser.for_loop                              PASS   ForStmt                        ForStmt                             
+parser.boundary_nested_parens                PASS   BinaryOp:/                     BinaryOp:/                          
+parser.missing_expr_raises                   PASS   ParseError raised              ParseError                          
+parser.missing_paren_raises                  PASS   ParseError raised              ParseError                          
+parser.missing_semicolon_raises              PASS   ParseError raised              ParseError                          
+parser.empty_program                         PASS   Program 0 stmts                Program 0 stmts                     
+parser.single_expression_stmt                PASS   ExprStmt                       ExprStmt                            
+parser.error_recovery_collects_multiple      PASS   >=2 errors, >=1 recovered stmt 2 errors, 1 stmts                   
+printer.text_tree_contains_nodes             PASS   Program,VarDecl,Literal:int    all 3 found                         
+printer.sexpr_well_formed                    PASS   starts (Program, balanced      (3/3)                               
+json.ast_serializes                          PASS   valid JSON with kind=Program   valid JSON, kind=Program            
+html.output_well_formed                      PASS   <!DOCTYPE...>, closes html,... well formed                         
+visualizer.dot_well_formed                   PASS   digraph ... }                  digraph ... }                       
+stats.node_count_positive                    PASS   nodes>0, depth>=2              nodes=7, depth=5                    
+semantic.valid_program_zero_issues           PASS   0 issues                       0 issues                            
+semantic.valid_nested_scopes                 PASS   0 issues                       0 issues                            
+semantic.valid_return_inside_function        PASS   0 issues                       0 issues                            
+semantic.valid_builtin_variadic_call         PASS   0 issues                       0 issues                            
+semantic.undeclared_identifier               PASS   type=undeclared_identifier     undeclared_identifier               
+semantic.redeclaration_detected              PASS   type=redeclaration             redeclaration                       
+semantic.wrong_arity_detected                PASS   type=wrong_arity               wrong_arity                         
+semantic.return_outside_function             PASS   type=return_outside_function   return_outside_function             
+semantic.assignment_to_undeclared            PASS   type=assignment_undeclared     assignment_undeclared               
+semantic.undefined_function_call             PASS   type=undefined_function        undefined_function                  
+semantic.multiple_errors_collected           PASS   >=3 issues, 3 types            3 issues: {'return_outside_functi...
+semantic.issue_has_all_fields                PASS   type,severity,line,column,m... all present                         
+parser.error_recovery_multi_errors           PASS   >=3 errors                     4 errors                            
+parser.error_recovery_partial_ast            PASS   >=2 stmts, >=1 error           2 stmts, 1 errors                   
+corpus.valid_programs_52_total               PASS   >=95% parse success            100.0% (52/52)                      
+-----------------------------------------------------------------------------------------------------------------------
+TOTAL: 39/39 passed, 0 failed

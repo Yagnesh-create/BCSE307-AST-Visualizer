@@ -1,0 +1,2 @@
+// Lexical failure for the slide 7 demonstration.
+let total = @value + 10;

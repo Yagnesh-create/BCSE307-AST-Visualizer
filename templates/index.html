@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AST Visualizer & Compiler Studio (M13) - Interactive Compiler Design Platform for BCSE307. Single-pass lexer, recursive-descent parser, panic error recovery, two-pass semantic analyzer, and multi-format AST visualizer.">
+    <title>AST Visualizer & Compiler Studio · BCSE307 (M13)</title>
+    
+    <script src="/static/js/theme.js"></script>
+    <!-- Master Stylesheet -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="/static/css/studio.css">
+    <link rel="stylesheet" href="/static/css/experience.css">
+</head>
+<body class="app-container">
+
+    <!-- ======================================================================
+         TOP HEADER & APPLICATION TOOLBAR
+         ====================================================================== -->
+    <header class="main-header">
+        <div class="brand-section">
+            <div class="brand-logo" title="Abstract Syntax Tree Visualizer">λ</div>
+            <div class="brand-info">
+                <div class="brand-title">
+                    AST Visualizer
+                    <span class="badge-tag badge-m13">M13 · BCSE307</span>
+                </div>
+                <div class="brand-sub">Interactive compiler studio</div>
+            </div>
+        </div>
+
+        <!-- Primary Navigation Tabs -->
+        <nav class="nav-tabs">
+            <button class="nav-tab-btn active" data-view="view-playground" title="Interactive Compiler Playground">
+                <span>Playground</span>
+            </button>
+            <button class="nav-tab-btn" data-view="view-samples" title="13 Categorized Sample Programs">
+                <span>Sample Library</span>
+            </button>
+            <button class="nav-tab-btn" data-view="view-tests" title="Run 39 Unit Tests & 52-Program Corpus">
+                <span>Validation Suite</span>
+            </button>
+        </nav>
+
+        <!-- Right Quick Actions -->
+        <div class="header-actions">
+            <button class="btn theme-toggle" id="btn-theme" type="button" aria-label="Switch color theme">◐ Theme</button>
+            <div class="status-pill" id="status-pill" title="Compiler Core Status">
+                <span class="status-dot" id="status-dot"></span>
+                <span id="status-text">Ready to compile</span>
+            </div>
+
+            <button class="btn" id="btn-open-diff-modal" title="Compare two AST structures side by side">
+                <span>⇄ Compare</span>
+            </button>
+
+            <button class="btn btn-primary" id="btn-compile" title="Compile source code into AST (Ctrl+Enter)">
+                <span>▶ Run & Compile</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- ======================================================================
+         MAIN APPLICATION VIEWS WRAPPER
+         ====================================================================== -->
+    <main class="views-container">
+
+        <!-- ==================================================================
+             VIEW 1: INTERACTIVE COMPILER PLAYGROUND (PRIMARY)
+             ================================================================== -->
+        <section class="view-section active" id="view-playground">
+            <div class="studio-intro">
+                <div>
+                    <div class="studio-eyebrow"><span></span> THE COMPILER WORKSPACE</div>
+                    <h1>From source to <em>structure.</em></h1>
+                    <p>Write. Compile. Explore the architecture of your code.</p>
+                </div>
+                <div class="studio-session">
+                    <div class="studio-summary" aria-live="polite">
+                        <div><span id="studio-nodes">—</span><small>AST NODES</small></div>
+                        <div><span id="studio-tokens">—</span><small>TOKENS</small></div>
+                        <div><span id="studio-time">—</span><small>COMPILE TIME</small></div>
+                    </div>
+                    <div class="studio-preferences">
+                        <span class="shortcut-hint"><kbd>Ctrl</kbd> + <kbd>Enter</kbd> to compile</span>
+                        <button class="btn motion-toggle" id="btn-motion" type="button" aria-pressed="true">Motion on</button>
+                        <button class="btn motion-toggle" id="btn-focus" type="button" aria-pressed="false">Expand workspace</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="playground-workspace">
+                
+                <!-- Left Pane: Source Code Editor -->
+                <div class="editor-pane">
+                    <div class="pane-toolbar">
+                        <div class="pane-title-group">
+                            <span class="pane-title">01 / Source code</span>
+                            <select id="sample-select" class="select-control" title="Load a pre-configured sample program">
+                                <option value="" disabled selected>Loading Samples...</option>
+                            </select>
+                        </div>
+
+                        <div class="toolbar-controls">
+                            <button class="btn btn-icon-only" id="btn-format" title="Format and Trim Code">🧹</button>
+                            <button class="btn btn-icon-only" id="btn-clear" title="Clear Editor">🗑️</button>
+                            <button class="btn btn-icon-only" id="btn-reset" title="Reset to demo.lang">↺</button>
+                            <button class="btn btn-icon-only" id="btn-font-minus" title="Decrease Font Size">A-</button>
+                            <button class="btn btn-icon-only" id="btn-font-plus" title="Increase Font Size">A+</button>
+                        </div>
+                    </div>
+
+                    <div class="editor-wrapper">
+                        <div class="line-numbers-gutter" id="line-numbers"></div>
+                        <textarea class="code-textarea" id="code-editor" aria-label="Source code editor" spellcheck="false" placeholder="// Write or paste custom C-like source code here..."></textarea>
+                    </div>
+
+                    <div class="editor-statusbar">
+                        <div class="statusbar-left">
+                            <span id="cursor-pos">Ln 1, Col 1</span>
+                            <span id="line-count">1 ln</span>
+                            <span id="char-count">0 ch</span>
+                        </div>
+                        <div class="statusbar-right">
+                            <span style="color:var(--accent-cyan);">custom-c-subset.lang</span>
+                            <span>UTF-8</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Pane: Results Studio -->
+                <div class="results-pane">
+                    <div class="result-overview">
+                        <div><span class="workspace-label">02 / COMPILATION RESULTS</span><strong id="compile-verdict" role="status">Ready to explore</strong></div>
+                        <button class="btn" id="btn-review-diagnostics" type="button">View diagnostics <span aria-hidden="true">↗</span></button>
+                    </div>
+                    
+                    <!-- Visual Compiler Pipeline Ribbon -->
+                    <div class="pipeline-ribbon" id="pipeline-ribbon">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+
+                    <!-- Results Tabs Header -->
+                    <div class="results-tabs-bar">
+                        <div class="results-nav">
+                            <button class="result-tab-btn active" data-tab="panel-ast-visualizer">
+                                <span>AST Explorer</span>
+                            </button>
+                            <button class="result-tab-btn" data-tab="panel-tokens">
+                                <span>Tokens</span>
+                                <span class="badge-counter" id="token-badge-counter">0</span>
+                            </button>
+                            <button class="result-tab-btn" data-tab="panel-errors">
+                                <span>Diagnostics</span>
+                                <span class="badge-counter" id="err-badge-counter">0</span>
+                            </button>
+                            <button class="result-tab-btn" data-tab="panel-outputs">
+                                <span>Outputs</span>
+                            </button>
+                            <button class="result-tab-btn" data-tab="panel-stats">
+                                <span>Statistics</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Results Panels Body -->
+                    <div class="results-body">
+
+                        <!-- RESULT TAB 1: AST VISUALIZER -->
+                        <div class="result-panel active" id="panel-ast-visualizer">
+                            <div class="ast-view-wrapper">
+                                <div class="ast-view-toolbar">
+                                    <div class="ast-mode-toggles">
+                                        <button class="ast-mode-btn active" id="btn-mode-graphical">Graphical Tree</button>
+                                        <button class="ast-mode-btn" id="btn-mode-hierarchical">Collapsible Cards</button>
+                                    </div>
+
+                                    <input type="text" class="ast-search-input" id="ast-search-input" placeholder="Search AST nodes...">
+
+                                    <div style="display:flex; gap:6px;">
+                                        <button class="btn btn-icon-only" id="btn-expand-all-ast" title="Expand All Nodes">⊞</button>
+                                        <button class="btn btn-icon-only" id="btn-collapse-all-ast" title="Collapse All Nodes">⊟</button>
+                                    </div>
+                                </div>
+
+                                <!-- Mode A: Graphical SVG Viewport -->
+                                <div class="ast-graphical-viewport" id="ast-graphical-viewport">
+                                    <svg class="ast-svg-canvas" id="ast-svg-canvas" aria-label="Abstract syntax tree"></svg>
+                                    
+                                    <div class="viewport-controls">
+                                        <button class="viewport-btn" id="btn-zoom-in" title="Zoom In">+</button>
+                                        <button class="viewport-btn" id="btn-zoom-out" title="Zoom Out">−</button>
+                                        <button class="viewport-btn" id="btn-zoom-reset" title="Reset Zoom">⟲</button>
+                                        <button class="viewport-btn" id="btn-zoom-fit" title="Fit to View">⊡</button>
+                                    </div>
+                                </div>
+
+                                <div class="canvas-footer">
+                                    <div class="node-legend" aria-label="Node category colors">
+                                        <span style="--legend-color:#818cf8">Structure</span>
+                                        <span style="--legend-color:#34d399">Function</span>
+                                        <span style="--legend-color:#38bdf8">Variable</span>
+                                        <span style="--legend-color:#fbbf24">Control</span>
+                                        <span style="--legend-color:#c084fc">Expression</span>
+                                        <span style="--legend-color:#f472b6">Literal</span>
+                                    </div>
+                                    <button class="btn" id="btn-export-svg" type="button" title="Download the complete AST as an SVG image">↓ Export SVG</button>
+                                </div>
+
+                                <!-- Mode B: Hierarchical Collapsible Cards Viewport -->
+                                <div class="ast-hierarchical-container" id="ast-hierarchical-container">
+                                    <ul class="ast-tree-root" id="ast-tree-root"></ul>
+                                </div>
+                            </div>
+
+                            <!-- AST Node Details Inspector Side Drawer -->
+                            <div class="node-inspector-drawer">
+                                <div class="inspector-header">
+                                    <span>🔍 Node Inspector</span>
+                                    <button class="btn btn-icon-only" id="btn-highlight-source" title="Highlight line in editor">📍 Jump</button>
+                                </div>
+                                <div class="inspector-body">
+                                    <div class="insp-card">
+                                        <div class="insp-row">
+                                            <span class="insp-label">Class</span>
+                                            <span class="insp-value" id="insp-node-kind">Program</span>
+                                        </div>
+                                        <div class="insp-row">
+                                            <span class="insp-label">Category</span>
+                                            <span class="insp-value" id="insp-node-cat">Structure</span>
+                                        </div>
+                                        <div class="insp-row">
+                                            <span class="insp-label">Attributes</span>
+                                            <span class="insp-value" id="insp-node-atoms">None</span>
+                                        </div>
+                                        <div class="insp-row">
+                                            <span class="insp-label">Coordinates</span>
+                                            <span class="insp-value" id="insp-node-loc">Line 1, Col 1</span>
+                                        </div>
+                                        <div class="insp-row">
+                                            <span class="insp-label">Subtree Nodes</span>
+                                            <span class="insp-value" id="insp-node-subnodes">1</span>
+                                        </div>
+                                        <div class="insp-row">
+                                            <span class="insp-label">Depth</span>
+                                            <span class="insp-value" id="insp-node-depth">1</span>
+                                        </div>
+                                    </div>
+
+                                    <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px;">
+                                        Direct Children
+                                    </div>
+                                    <div id="insp-children-list" style="margin-bottom:14px;"></div>
+
+                                    <div style="font-size:11px; font-weight:700; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px;">
+                                        JSON Structure
+                                    </div>
+                                    <pre id="insp-json-snippet" style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:6px; padding:10px; font-family:var(--font-mono); font-size:11px; max-height:160px; overflow:auto; color:var(--text-secondary);"></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- RESULT TAB 2: TOKEN EXPLORER -->
+                        <div class="result-panel" id="panel-tokens">
+                            <div class="tokens-header-bar">
+                                <div class="token-filter-chips">
+                                    <div class="filter-chip active" data-filter="ALL">All Tokens</div>
+                                    <div class="filter-chip" data-filter="KEYWORD">Keywords</div>
+                                    <div class="filter-chip" data-filter="IDENTIFIER">Identifiers</div>
+                                    <div class="filter-chip" data-filter="LITERAL">Literals</div>
+                                    <div class="filter-chip" data-filter="OPERATOR">Operators</div>
+                                    <div class="filter-chip" data-filter="DELIMITER">Delimiters</div>
+                                </div>
+
+                                <input type="text" class="ast-search-input" id="token-search-input" placeholder="Search tokens...">
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="width:50px;">#</th>
+                                            <th>Token Type</th>
+                                            <th>Category</th>
+                                            <th>Lexeme / Value</th>
+                                            <th>Coordinates</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="token-table-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- RESULT TAB 3: ERROR & DIAGNOSTICS ANALYSIS -->
+                        <div class="result-panel" id="panel-errors">
+                            <div class="empty-state" id="errors-empty-state">
+                                <div class="empty-icon">✅</div>
+                                <div class="empty-title">Zero Compiler Diagnostics</div>
+                                <div class="empty-desc">Lexical scanner, parser, and two-pass semantic analyzer verified program validity without errors.</div>
+                            </div>
+                            <div id="errors-list" style="display:flex; flex-direction:column; gap:12px;"></div>
+                        </div>
+
+                        <!-- RESULT TAB 4: AST OUTPUT FORMATS -->
+                        <div class="result-panel" id="panel-outputs">
+                            <div class="output-subtabs-bar">
+                                <div class="format-pills">
+                                    <button class="format-pill-btn active" data-format="tree">Indented Text Tree</button>
+                                    <button class="format-pill-btn" data-format="sexpr">LISP S-Expression</button>
+                                    <button class="format-pill-btn" data-format="json">JSON AST</button>
+                                    <button class="format-pill-btn" data-format="dot">Graphviz DOT</button>
+                                    <button class="format-pill-btn" data-format="html">Interactive HTML</button>
+                                </div>
+
+                                <div class="format-actions">
+                                    <button class="btn" id="btn-copy-output">📋 Copy Output</button>
+                                    <button class="btn btn-primary" id="btn-download-output">💾 Download File</button>
+                                </div>
+                            </div>
+
+                            <div class="output-viewer-box" id="output-viewer-box"></div>
+                            
+                            <div id="output-frame-wrap" style="display:none; flex:1; height:100%; border:1px solid var(--border-main); border-radius:8px; overflow:hidden;">
+                                <iframe class="html-preview-frame" id="html-preview-frame" title="Interactive HTML AST Preview"></iframe>
+                            </div>
+                        </div>
+
+                        <!-- RESULT TAB 5: COMPILER STATISTICS -->
+                        <div class="result-panel" id="panel-stats">
+                            <div class="metrics-grid">
+                                <div class="metric-card">
+                                    <span class="metric-label">AST Node Count</span>
+                                    <span class="metric-value" id="stat-node-count">0</span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">AST Tree Depth</span>
+                                    <span class="metric-value" id="stat-ast-depth">0</span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Tokens Produced</span>
+                                    <span class="metric-value" id="stat-token-count">0</span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Source Lines / Chars</span>
+                                    <span class="metric-value" id="stat-lines-count">0 / 0</span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Front-End Time</span>
+                                    <span class="metric-value" id="stat-total-time">0ms</span>
+                                </div>
+                                <div class="metric-card">
+                                    <span class="metric-label">Diagnostics Count</span>
+                                    <span class="metric-value" id="stat-issues-count">0</span>
+                                </div>
+                            </div>
+
+                            <div class="timing-bar-card">
+                                <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <span style="font-size:13px; font-weight:700; text-transform:uppercase; color:var(--text-muted);">Front-End Phase Time Allocation</span>
+                                    <div class="timing-legend">
+                                        <div class="legend-item"><span class="legend-color" style="background:var(--accent-emerald);"></span> Lexing (<span id="time-lex-ms">0ms</span>)</div>
+                                        <div class="legend-item"><span class="legend-color" style="background:var(--accent-cyan);"></span> Parsing (<span id="time-parse-ms">0ms</span>)</div>
+                                        <div class="legend-item"><span class="legend-color" style="background:var(--accent-purple);"></span> Semantic (<span id="time-sem-ms">0ms</span>)</div>
+                                    </div>
+                                </div>
+                                <div class="timing-progress-bar">
+                                    <div class="time-slice lex" id="bar-slice-lex" style="width:33%;"></div>
+                                    <div class="time-slice parse" id="bar-slice-parse" style="width:33%;"></div>
+                                    <div class="time-slice sem" id="bar-slice-sem" style="width:34%;"></div>
+                                </div>
+                            </div>
+
+                            <div style="background:var(--bg-surface); border:1px solid var(--border-main); border-radius:8px; padding:16px;">
+                                <h4 style="font-size:13px; font-weight:700; text-transform:uppercase; color:var(--text-muted); margin-bottom:12px;">Token Frequency Histogram</h4>
+                                <div class="table-responsive" style="max-height:260px;">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Token Type</th>
+                                                <th>Frequency Count</th>
+                                                <th>Relative Share</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="token-histogram-body"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ==================================================================
+             VIEW 2: SAMPLE PROGRAM LIBRARY
+             ================================================================== -->
+        <section class="view-section" id="view-samples">
+            <div class="content-page-wrapper">
+                <div class="page-header">
+                    <h1 class="page-title">📚 Sample Program Library</h1>
+                    <p class="page-desc">
+                        Explore 13 officially verified .lang corpus programs designed for the BCSE307 compiler.
+                        Each sample targets specific compiler front-end stages: recursive functions, multi-way if-else branching, operator precedence climbing, panic-mode error recovery, and scope resolution.
+                    </p>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                    <input type="text" class="ast-search-input" id="sample-search-input" style="width:280px;" placeholder="Filter samples by name or description...">
+                    <div style="font-size:12px; color:var(--text-muted); font-family:var(--font-mono);">Zero mock samples · 100% real compiler files</div>
+                </div>
+
+                <div class="samples-grid" id="samples-grid">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================================================================
+             VIEW 4: COMPILER VALIDATION SUITE (TEST RUNNER)
+             ================================================================== -->
+        <section class="view-section" id="view-tests">
+            <div class="content-page-wrapper">
+                <div class="page-header">
+                    <h1 class="page-title">🧪 Compiler Validation & Regression Suite</h1>
+                    <p class="page-desc">
+                        Execute the real automated test harness in <code>code.py</code>.
+                        Verifies 39 unit test assertions across Lexer, Parser, Panic Recovery, 5 Output Renderers, Semantic Analyzer, and the 52-program boundary corpus.
+                    </p>
+                </div>
+
+                <div class="test-summary-ribbon">
+                    <button class="btn btn-primary" id="btn-run-test-suite" style="padding:10px 20px; font-size:13.5px;">
+                        <span>▶ Run All 39 Unit Tests & Corpus</span>
+                    </button>
+
+                    <div class="test-progress-group">
+                        <div style="display:flex; justify-content:space-between; font-size:12px;">
+                            <span id="test-summary-text">Ready to run test harness</span>
+                            <span style="font-family:var(--font-mono); color:var(--text-muted);">Suite: 39 Cases + 52 Corpus</span>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress-fill" id="test-progress-bar"></div>
+                        </div>
+                    </div>
+
+                    <button class="btn" id="btn-view-raw-terminal">📟 View Raw Terminal</button>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                    <div class="test-filter-chips">
+                        <div class="filter-chip active" data-filter="ALL">All Tests (39)</div>
+                        <div class="filter-chip" data-filter="PASS">Passing Only</div>
+                        <div class="filter-chip" data-filter="FAIL">Failures</div>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Test Identifier</th>
+                                <th>Category</th>
+                                <th>Status</th>
+                                <th>Expected vs Actual Verification</th>
+                            </tr>
+                        </thead>
+                        <tbody id="test-table-body">
+                            <tr>
+                                <td colspan="4" style="text-align:center; padding:30px; color:var(--text-muted);">
+                                    Click "Run All 39 Unit Tests & Corpus" to execute the real test suite.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ======================================================================
+         MODALS & OVERLAYS
+         ====================================================================== -->
+    <!-- AST Diff Modal -->
+    <div class="modal-overlay" id="diff-modal" role="dialog" aria-modal="true" aria-labelledby="diff-title">
+        <div class="modal-card">
+            <div class="modal-head">
+                <h3 class="modal-title" id="diff-title">Compare syntax trees</h3>
+                <button class="btn btn-icon-only modal-close-btn" aria-label="Close comparison">✕</button>
+            </div>
+            <div class="modal-body">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:14px;">
+                    <div>
+                        <label for="diff-editor-a" style="font-size:12px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:4px;">Version A (Source)</label>
+                        <textarea class="code-textarea" id="diff-editor-a" style="height:140px; background:var(--bg-card); border:1px solid var(--border-main); border-radius:6px;" placeholder="// Source code A..."></textarea>
+                    </div>
+                    <div>
+                        <label for="diff-editor-b" style="font-size:12px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:4px;">Version B (Modified Source)</label>
+                        <textarea class="code-textarea" id="diff-editor-b" style="height:140px; background:var(--bg-card); border:1px solid var(--border-main); border-radius:6px;" placeholder="func add(a, b) { return a + b + 10; }"></textarea>
+                    </div>
+                </div>
+
+                <div style="display:flex; justify-content:center; margin-bottom:16px;">
+                    <button class="btn btn-primary" id="btn-run-diff">Compare ASTs</button>
+                </div>
+
+                <div id="diff-results-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Box -->
+    <div class="toast-notice" id="toast-notice" role="status" aria-live="polite">Notice</div>
+
+    <!-- Master Application Script -->
+    <script src="/static/js/app.js"></script>
+    <script src="/static/js/experience.js"></script>
+</body>
+</html>

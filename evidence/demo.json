@@ -1,0 +1,420 @@
+{
+  "kind": "Program",
+  "line": 1,
+  "column": 1,
+  "children": [
+    {
+      "kind": "FunctionDecl",
+      "line": 2,
+      "column": 1,
+      "attributes": [
+        "classify"
+      ],
+      "children": [
+        {
+          "kind": "Param",
+          "line": 2,
+          "column": 15,
+          "attributes": [
+            "x"
+          ]
+        },
+        {
+          "kind": "Block",
+          "line": 2,
+          "column": 18,
+          "children": [
+            {
+              "kind": "IfStmt",
+              "line": 3,
+              "column": 5,
+              "children": [
+                {
+                  "kind": "BinaryOp:<",
+                  "line": 3,
+                  "column": 11,
+                  "children": [
+                    {
+                      "kind": "Identifier",
+                      "line": 3,
+                      "column": 9,
+                      "attributes": [
+                        "x"
+                      ]
+                    },
+                    {
+                      "kind": "Literal:int",
+                      "line": 3,
+                      "column": 13,
+                      "attributes": [
+                        "0"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "kind": "Block",
+                  "line": 3,
+                  "column": 16,
+                  "children": [
+                    {
+                      "kind": "ExprStmt",
+                      "line": 4,
+                      "column": 14,
+                      "children": [
+                        {
+                          "kind": "Call",
+                          "line": 4,
+                          "column": 14,
+                          "attributes": [
+                            "print"
+                          ],
+                          "children": [
+                            {
+                              "kind": "Literal:string",
+                              "line": 4,
+                              "column": 15,
+                              "attributes": [
+                                "\"negative\""
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "kind": "Block",
+                  "line": 5,
+                  "column": 12,
+                  "children": [
+                    {
+                      "kind": "ExprStmt",
+                      "line": 6,
+                      "column": 14,
+                      "children": [
+                        {
+                          "kind": "Call",
+                          "line": 6,
+                          "column": 14,
+                          "attributes": [
+                            "print"
+                          ],
+                          "children": [
+                            {
+                              "kind": "Literal:string",
+                              "line": 6,
+                              "column": 15,
+                              "attributes": [
+                                "\"non-negative\""
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "FunctionDecl",
+      "line": 10,
+      "column": 1,
+      "attributes": [
+        "main"
+      ],
+      "children": [
+        {
+          "kind": "Block",
+          "line": 10,
+          "column": 13,
+          "children": [
+            {
+              "kind": "VarDecl",
+              "line": 11,
+              "column": 5,
+              "attributes": [
+                "let",
+                "a"
+              ],
+              "children": [
+                {
+                  "kind": "BinaryOp:+",
+                  "line": 11,
+                  "column": 15,
+                  "children": [
+                    {
+                      "kind": "Literal:int",
+                      "line": 11,
+                      "column": 13,
+                      "attributes": [
+                        "5"
+                      ]
+                    },
+                    {
+                      "kind": "BinaryOp:*",
+                      "line": 11,
+                      "column": 19,
+                      "children": [
+                        {
+                          "kind": "Literal:int",
+                          "line": 11,
+                          "column": 17,
+                          "attributes": [
+                            "3"
+                          ]
+                        },
+                        {
+                          "kind": "Literal:int",
+                          "line": 11,
+                          "column": 21,
+                          "attributes": [
+                            "2"
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "kind": "VarDecl",
+              "line": 12,
+              "column": 5,
+              "attributes": [
+                "int",
+                "i"
+              ],
+              "children": [
+                {
+                  "kind": "Literal:int",
+                  "line": 12,
+                  "column": 13,
+                  "attributes": [
+                    "0"
+                  ]
+                }
+              ]
+            },
+            {
+              "kind": "WhileStmt",
+              "line": 13,
+              "column": 5,
+              "children": [
+                {
+                  "kind": "BinaryOp:<",
+                  "line": 13,
+                  "column": 14,
+                  "children": [
+                    {
+                      "kind": "Identifier",
+                      "line": 13,
+                      "column": 12,
+                      "attributes": [
+                        "i"
+                      ]
+                    },
+                    {
+                      "kind": "Literal:int",
+                      "line": 13,
+                      "column": 16,
+                      "attributes": [
+                        "10"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "kind": "Block",
+                  "line": 13,
+                  "column": 20,
+                  "children": [
+                    {
+                      "kind": "Assign",
+                      "line": 14,
+                      "column": 9,
+                      "attributes": [
+                        "i"
+                      ],
+                      "children": [
+                        {
+                          "kind": "BinaryOp:+",
+                          "line": 14,
+                          "column": 15,
+                          "children": [
+                            {
+                              "kind": "Identifier",
+                              "line": 14,
+                              "column": 13,
+                              "attributes": [
+                                "i"
+                              ]
+                            },
+                            {
+                              "kind": "Literal:int",
+                              "line": 14,
+                              "column": 17,
+                              "attributes": [
+                                "1"
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "kind": "ForStmt",
+              "line": 16,
+              "column": 5,
+              "children": [
+                {
+                  "kind": "VarDecl",
+                  "line": 16,
+                  "column": 10,
+                  "attributes": [
+                    "let",
+                    "j"
+                  ],
+                  "children": [
+                    {
+                      "kind": "Literal:int",
+                      "line": 16,
+                      "column": 18,
+                      "attributes": [
+                        "0"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "kind": "BinaryOp:<",
+                  "line": 16,
+                  "column": 23,
+                  "children": [
+                    {
+                      "kind": "Identifier",
+                      "line": 16,
+                      "column": 21,
+                      "attributes": [
+                        "j"
+                      ]
+                    },
+                    {
+                      "kind": "Literal:int",
+                      "line": 16,
+                      "column": 25,
+                      "attributes": [
+                        "3"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "kind": "Assign",
+                  "line": 16,
+                  "column": 28,
+                  "attributes": [
+                    "j"
+                  ],
+                  "children": [
+                    {
+                      "kind": "BinaryOp:+",
+                      "line": 16,
+                      "column": 34,
+                      "children": [
+                        {
+                          "kind": "Identifier",
+                          "line": 16,
+                          "column": 32,
+                          "attributes": [
+                            "j"
+                          ]
+                        },
+                        {
+                          "kind": "Literal:int",
+                          "line": 16,
+                          "column": 36,
+                          "attributes": [
+                            "1"
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "kind": "Block",
+                  "line": 16,
+                  "column": 39,
+                  "children": [
+                    {
+                      "kind": "ExprStmt",
+                      "line": 17,
+                      "column": 14,
+                      "children": [
+                        {
+                          "kind": "Call",
+                          "line": 17,
+                          "column": 14,
+                          "attributes": [
+                            "print"
+                          ],
+                          "children": [
+                            {
+                              "kind": "Identifier",
+                              "line": 17,
+                              "column": 15,
+                              "attributes": [
+                                "j"
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "kind": "ReturnStmt",
+              "line": 19,
+              "column": 5,
+              "children": [
+                {
+                  "kind": "Call",
+                  "line": 19,
+                  "column": 20,
+                  "attributes": [
+                    "classify"
+                  ],
+                  "children": [
+                    {
+                      "kind": "Identifier",
+                      "line": 19,
+                      "column": 21,
+                      "attributes": [
+                        "a"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

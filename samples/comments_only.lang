@@ -1,0 +1,2 @@
+// A valid program with zero statements.
+/* The lexer emits EOF and the parser returns an empty Program. */

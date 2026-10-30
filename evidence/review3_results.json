@@ -1,0 +1,298 @@
+{
+  "recorded_at_utc": "2026-10-30T14:06:46.372784+00:00",
+  "python": "3.13.15",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "flask": "3.1.3",
+  "core_passed": true,
+  "integration_passed": 30,
+  "integration_total": 30,
+  "cases": [
+    {
+      "test": "web.home",
+      "expected": 200,
+      "actual": 200,
+      "passed": true
+    },
+    {
+      "test": "web.health",
+      "expected": 200,
+      "actual": 200,
+      "passed": true
+    },
+    {
+      "test": "web.missing_sample",
+      "expected": 404,
+      "actual": 404,
+      "passed": true
+    },
+    {
+      "test": "valid.all_output_formats",
+      "expected": [
+        "dot",
+        "html",
+        "json",
+        "sexpr",
+        "tree"
+      ],
+      "actual": [
+        "dot",
+        "html",
+        "json",
+        "sexpr",
+        "tree"
+      ],
+      "passed": true
+    },
+    {
+      "test": "valid.semantic_program",
+      "expected": true,
+      "actual": true,
+      "passed": true
+    },
+    {
+      "test": "boundary.empty_program",
+      "expected": true,
+      "actual": true,
+      "passed": true
+    },
+    {
+      "test": "regression.comments_only",
+      "expected": true,
+      "actual": true,
+      "passed": true
+    },
+    {
+      "test": "boundary.20_parentheses",
+      "expected": true,
+      "actual": true,
+      "passed": true
+    },
+    {
+      "test": "stress.1000_statements",
+      "expected": 1000,
+      "actual": 1000,
+      "passed": true
+    },
+    {
+      "test": "invalid.lexical",
+      "expected": "lexer",
+      "actual": "lexer",
+      "passed": true
+    },
+    {
+      "test": "invalid.syntax",
+      "expected": true,
+      "actual": true,
+      "passed": true
+    },
+    {
+      "test": "invalid.semantic",
+      "expected": true,
+      "actual": true,
+      "passed": true
+    },
+    {
+      "test": "regression.unmatched_closing_brace",
+      "expected": true,
+      "actual": true,
+      "passed": true
+    },
+    {
+      "test": "regression.partial_ast",
+      "expected": 2,
+      "actual": 2,
+      "passed": true
+    },
+    {
+      "test": "failure./api/compile.non_object.[1]",
+      "expected": 400,
+      "actual": 400,
+      "passed": true
+    },
+    {
+      "test": "failure./api/compile.non_object.'text'",
+      "expected": 400,
+      "actual": 400,
+      "passed": true
+    },
+    {
+      "test": "failure./api/compile.non_object.12",
+      "expected": 400,
+      "actual": 400,
+      "passed": true
+    },
+    {
+      "test": "failure./api/compile.non_object.None",
+      "expected": 400,
+      "actual": 400,
+      "passed": true
+    },
+    {
+      "test": "failure./api/compile.malformed_json",
+      "expected": 400,
+      "actual": 400,
+      "passed": true
+    },
+    {
+      "test": "failure./api/diff.non_object.[1]",
+      "expected": 400,
+      "actual": 400,
+      "passed": true
+    },
+    {
+      "test": "failure./api/diff.non_object.'text'",
+      "expected": 400,
+      "actual": 400,
+      "passed": true
+    },
+    {
+      "test": "failure./api/diff.non_object.12",
+      "expected": 400,
+      "actual": 400,
+      "passed": true
+    },
+    {
+      "test": "failure./api/diff.non_object.None",
+      "expected": 400,
+      "actual": 400,
+      "passed": true
+    },
+    {
+      "test": "failure./api/diff.malformed_json",
+      "expected": 400,
+      "actual": 400,
+      "passed": true
+    },
+    {
+      "test": "failure.source_type",
+      "expected": 400,
+      "actual": 400,
+      "passed": true
+    },
+    {
+      "test": "failure.diff_source_type",
+      "expected": 400,
+      "actual": 400,
+      "passed": true
+    },
+    {
+      "test": "failure.request_size_limit",
+      "expected": 413,
+      "actual": 413,
+      "passed": true
+    },
+    {
+      "test": "diff.equal_sources",
+      "expected": 0,
+      "actual": 0,
+      "passed": true
+    },
+    {
+      "test": "regression.deterministic_json",
+      "expected": true,
+      "actual": true,
+      "passed": true
+    },
+    {
+      "test": "failure.cli_missing_file",
+      "expected": true,
+      "actual": true,
+      "passed": true
+    }
+  ],
+  "benchmarks": [
+    {
+      "statements": 10,
+      "characters": 99,
+      "tokens": 51,
+      "nodes": 21,
+      "median_ms": 0.5246,
+      "min_ms": 0.1307,
+      "max_ms": 0.7173,
+      "samples_ms": [
+        0.1414999715052545,
+        0.13070000568404794,
+        0.18220004858449101,
+        0.23119995603337884,
+        0.2275000442750752,
+        0.5201000021770597,
+        0.7172999903559685,
+        0.6914000259712338,
+        0.6164000369608402,
+        0.5572999943979084,
+        0.6241999799385667,
+        0.6680999649688601,
+        0.6244999822229147,
+        0.6363000138662755,
+        0.4194999928586185,
+        0.42070000199601054,
+        0.5714999861083925,
+        0.5040999967604876,
+        0.42429997120052576,
+        0.5290000117383897
+      ]
+    },
+    {
+      "statements": 100,
+      "characters": 1179,
+      "tokens": 501,
+      "nodes": 201,
+      "median_ms": 4.1336,
+      "min_ms": 1.5023,
+      "max_ms": 5.4892,
+      "samples_ms": [
+        4.1145000141114,
+        5.114400002639741,
+        1.5023000305518508,
+        3.8674999959766865,
+        4.064600041601807,
+        4.9171000136993825,
+        4.515199980232865,
+        3.6860000109300017,
+        4.379699996206909,
+        4.577099985908717,
+        5.489200004376471,
+        2.7732999878935516,
+        5.475100013427436,
+        2.7504999889060855,
+        3.4847999922931194,
+        2.7175999712198973,
+        2.310900017619133,
+        4.418299999088049,
+        4.325100046116859,
+        4.1526000131852925
+      ]
+    },
+    {
+      "statements": 1000,
+      "characters": 13779,
+      "tokens": 5001,
+      "nodes": 2001,
+      "median_ms": 43.4366,
+      "min_ms": 30.4211,
+      "max_ms": 54.321,
+      "samples_ms": [
+        53.25040000025183,
+        48.4127999516204,
+        32.88979997159913,
+        38.799499976448715,
+        35.55289999349043,
+        47.13309998624027,
+        40.224700001999736,
+        30.421100032981485,
+        39.943200012203306,
+        30.79829999478534,
+        37.67150000203401,
+        43.663699994795024,
+        47.99250001087785,
+        40.98980000708252,
+        51.150099956430495,
+        43.20940002799034,
+        52.94240004150197,
+        54.321000003255904,
+        47.12579998886213,
+        53.11659997096285
+      ]
+    }
+  ]
+}

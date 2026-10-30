@@ -1,0 +1,13 @@
+// Variable Declarations
+let inferredInt = 42;
+let inferredFloat = 3.14159;
+let inferredString = "Compiler Design 2026";
+let inferredBool = true;
+
+int explicitInt = 100;
+float explicitFloat = 0.005;
+bool isActive = false;
+string title = "AST Visualizer / Pretty Printer";
+
+int uninitializedVar;
+float bufferValue;

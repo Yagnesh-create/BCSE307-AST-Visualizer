@@ -1,0 +1,14 @@
+// Expected semantic issues:
+//   1. undeclared identifier 'y'
+//   2. wrong arity for 'add' (expects 2, got 1)
+//   3. call to undefined function 'foo'
+//   4. assignment to undeclared variable 'undeclared' (via identifier)
+//   5. redeclaration of 'x' in same scope
+//   6. return outside function
+func add(a, b) { return a + b; }
+int x = y;
+int z = add(1);
+int w = foo(1, 2);
+x = undeclared;
+int x = 99;
+return 0;
